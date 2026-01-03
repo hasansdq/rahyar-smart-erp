@@ -28,6 +28,9 @@ const App = () => {
   const [user, setUser] = useState<User | null>(null);
   const [page, setPage] = useState<AppState['page']>('dashboard');
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  
+  // Auth & Loading States
+  const [isAuthChecking, setIsAuthChecking] = useState(true); // Loading initial session
   const [showSplash, setShowSplash] = useState(true);
   const [dataLoaded, setDataLoaded] = useState(false);
 
@@ -35,19 +38,31 @@ const App = () => {
   const [showAccessDenied, setShowAccessDenied] = useState(false);
   const [deniedMessage, setDeniedMessage] = useState('');
 
+  // Initial Session Check
   useEffect(() => {
-     // Try to load initial data if token exists
-     db.init().then(() => {
-         setDataLoaded(true);
-         const settings = db.getSettings();
-         if(settings.themeMode === 'system') {
-            const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            setTheme(isDark ? 'dark' : 'light');
-         } else {
-            setTheme(settings.themeMode || 'light');
+     const checkSession = async () => {
+         // This attempts to fetch data using the cookie
+         const currentUser = await db.init();
+         
+         if (currentUser) {
+             setUser(currentUser);
+             setDataLoaded(true);
+             
+             // Apply settings if available
+             const settings = db.getSettings();
+             if(settings.themeMode === 'system') {
+                const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                setTheme(isDark ? 'dark' : 'light');
+             } else {
+                setTheme(settings.themeMode || 'light');
+             }
          }
-     });
-  }, [user]); // Reload if user changes (re-login)
+         
+         setIsAuthChecking(false);
+     };
+
+     checkSession();
+  }, []); // Run once on mount
 
   useEffect(() => {
      if (theme === 'dark') document.documentElement.classList.add('dark');
@@ -64,15 +79,17 @@ const App = () => {
       }
   };
 
-  if (showSplash) {
-      return <SplashScreen onFinish={() => setShowSplash(false)} />;
+  // Splash Screen Logic: Show splash at least until auth check is done + animation time
+  if (showSplash || isAuthChecking) {
+      return <SplashScreen onFinish={() => {
+        if (!isAuthChecking) setShowSplash(false);
+      }} />;
   }
 
-  if (!user) return <LoginScreen onLogin={setUser} />;
+  // If auth check is done and no user, show login
+  if (!user) return <LoginScreen onLogin={(u) => { setUser(u); setDataLoaded(true); }} />;
 
-  // Ensure data is loaded before showing dashboard to prevent empty charts
-  if (!dataLoaded) return <div className="flex h-screen items-center justify-center bg-slate-900 text-white">Loading data...</div>;
-
+  // Main App (Protected)
   return (
     <div className={`flex h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300 overflow-hidden font-sans`}>
         <AccessDeniedModal 

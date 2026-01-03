@@ -39,18 +39,24 @@ class DBService {
       this.listeners.forEach(l => l());
   }
 
-  async init() {
-    // If we have data and initialized, we might still want to refresh to check cookie validity
+  async init(): Promise<User | null> {
+    // Attempt to fetch data. If successful, it means the HttpOnly cookie is valid.
     try {
         const res = await api.get('/data');
-        this.data = res.data;
+        
+        // Extract currentUser and the rest of the data
+        const { currentUser, ...systemData } = res.data;
+        
+        this.data = systemData;
         this.isInitialized = true;
         this.notify();
-        return true;
+        
+        return currentUser || null;
     } catch (e) {
-        console.error("Failed to fetch initial data (Session might be expired)", e);
+        // If 401/403, session is invalid
+        console.warn("Session check failed or expired:", e);
         this.isInitialized = false;
-        return false;
+        return null;
     }
   }
 
@@ -58,9 +64,15 @@ class DBService {
   async login(username: string, password: string): Promise<{user?: User, error?: string}> {
     try {
         const res = await api.post('/auth/login', { username, password });
-        // Token is now in HttpOnly cookie handled by browser
-        await this.init(); // fetch data after login
-        return { user: res.data.user };
+        // Token is set in HttpOnly cookie by server.
+        // Now fetch full data (including user profile)
+        const user = await this.init(); 
+        
+        if (user) {
+            return { user };
+        } else {
+            return { error: 'خطا در دریافت اطلاعات کاربری پس از ورود.' };
+        }
     } catch (e: any) {
         const msg = e.response?.data?.message || e.message || 'خطا در ورود';
         return { error: msg };
@@ -70,7 +82,6 @@ class DBService {
   async registerUser(user: User): Promise<{success: boolean, error?: string}> {
     try {
         await api.post('/auth/register', user);
-        // Token is now in HttpOnly cookie
         await this.init(); 
         return { success: true };
     } catch (e: any) {
@@ -104,7 +115,6 @@ class DBService {
   getSettings(): AppSettings { return this.data.settings; }
 
   // Actions (Optimistic UI + Server Sync)
-  // We update local state AND notify listeners immediately, while also sending to server
   
   async addUser(user: User) { 
       await api.post('/users', user); 

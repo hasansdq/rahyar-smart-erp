@@ -38,9 +38,14 @@ const createCrudRoutes = (model, pathName, allowedRoles = []) => {
 router.get('/data', authenticateToken, async (req, res) => {
   try {
     const role = req.user.role;
+    const userId = req.user.id;
+
     const isManager = role === 'مدیر';
     const isAdmin = role === 'ادمین';
     const isEmployee = role === 'کارمند';
+
+    // Fetch Current User Details to persist session on frontend
+    const currentUser = await User.findByPk(userId, { attributes: { exclude: ['password'] } });
 
     // Everyone sees these
     const users = await User.findAll({ attributes: { exclude: ['password'] } }); // Hide hashes
@@ -62,12 +67,13 @@ router.get('/data', authenticateToken, async (req, res) => {
     // Sensitive Data Filtering
     const finance = (isManager || isAdmin) ? await Transaction.findAll() : [];
     const contracts = (isManager || isAdmin) ? await Contract.findAll() : [];
-    const reports = await Report.findAll(); // Assuming reports are shared or filtered by user ID usually, but keeping simple
+    const reports = await Report.findAll(); 
     
     // Business Plan is highly confidential
-    const businessPlan = isManager ? "{}" : null; // Only manager gets the real plan placeholder (logic in frontend handles content)
+    const businessPlan = isManager ? "{}" : null; 
 
     res.json({
+      currentUser, // IMPORTANT: Send back the logged-in user info
       users, projects, tasks, finance, reports, contracts, chatLogs, knowledgeBase, settings,
       businessPlan: businessPlan || ""
     });
@@ -77,11 +83,10 @@ router.get('/data', authenticateToken, async (req, res) => {
 });
 
 // Apply CRUD routes with role protections
-// Use Persian Role Strings as defined in types.ts (UserRole enum) matches what is stored in DB
-createCrudRoutes(User, 'users', ['مدیر', 'ادمین']); // Only admins manage users
-createCrudRoutes(Project, 'projects'); // Everyone contributes
+createCrudRoutes(User, 'users', ['مدیر', 'ادمین']); 
+createCrudRoutes(Project, 'projects'); 
 createCrudRoutes(Task, 'tasks');
-createCrudRoutes(Transaction, 'transactions', ['مدیر', 'ادمین']); // Only admins manage finance
+createCrudRoutes(Transaction, 'transactions', ['مدیر', 'ادمین']); 
 createCrudRoutes(Settings, 'settings', ['مدیر', 'ادمین']);
 
 export default router;
