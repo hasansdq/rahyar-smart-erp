@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { User } from './types';
 import { db } from './services/db';
-import { SidebarItem, RahyarLogo, SplashScreen } from './components/UI';
+import { SidebarItem, RahyarLogo, SplashScreen, AccessDeniedModal } from './components/UI';
+import { canAccess, getAccessMessage, PageId } from './utils/permissions';
 import { 
   LayoutDashboard, Users, Briefcase, FileText, Settings, 
   LogOut, Wallet, MessageSquare
@@ -19,7 +20,7 @@ import SettingsView from './views/SettingsView';
 
 interface AppState {
   user: User | null;
-  page: 'dashboard' | 'projects' | 'finance' | 'team' | 'chat' | 'settings' | 'business-plan';
+  page: PageId;
   theme: 'light' | 'dark';
 }
 
@@ -29,6 +30,10 @@ const App = () => {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [showSplash, setShowSplash] = useState(true);
   const [dataLoaded, setDataLoaded] = useState(false);
+
+  // Access Control State
+  const [showAccessDenied, setShowAccessDenied] = useState(false);
+  const [deniedMessage, setDeniedMessage] = useState('');
 
   useEffect(() => {
      // Try to load initial data if token exists
@@ -49,6 +54,16 @@ const App = () => {
      else document.documentElement.classList.remove('dark');
   }, [theme]);
 
+  const handlePageChange = (newPage: PageId) => {
+      if (!user) return;
+      if (canAccess(user.role, newPage)) {
+          setPage(newPage);
+      } else {
+          setDeniedMessage(getAccessMessage(newPage));
+          setShowAccessDenied(true);
+      }
+  };
+
   if (showSplash) {
       return <SplashScreen onFinish={() => setShowSplash(false)} />;
   }
@@ -60,6 +75,12 @@ const App = () => {
 
   return (
     <div className={`flex h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300 overflow-hidden font-sans`}>
+        <AccessDeniedModal 
+            isOpen={showAccessDenied} 
+            onClose={() => setShowAccessDenied(false)} 
+            message={deniedMessage} 
+        />
+
         {/* Sidebar */}
         <div className="w-72 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 p-6 flex flex-col shadow-xl z-20">
              <div className="flex items-center gap-4 px-1 mb-10">
@@ -71,17 +92,60 @@ const App = () => {
 
              <div className="flex-1 overflow-y-auto custom-scrollbar -mr-4 pr-4">
                  <div className="text-xs font-bold text-slate-400 mb-4 px-4 uppercase tracking-wider">منوی اصلی</div>
-                 <SidebarItem icon={LayoutDashboard} label="داشبورد" active={page === 'dashboard'} onClick={() => setPage('dashboard')} />
-                 <SidebarItem icon={Briefcase} label="پروژه‌ها" active={page === 'projects'} onClick={() => setPage('projects')} />
-                 <SidebarItem icon={Wallet} label="مالی و حسابداری" active={page === 'finance'} onClick={() => setPage('finance')} />
-                 <SidebarItem icon={Users} label="تیم و پرسنل" active={page === 'team'} onClick={() => setPage('team')} />
+                 <SidebarItem 
+                    icon={LayoutDashboard} 
+                    label="داشبورد" 
+                    active={page === 'dashboard'} 
+                    onClick={() => handlePageChange('dashboard')} 
+                    locked={!canAccess(user.role, 'dashboard')}
+                 />
+                 <SidebarItem 
+                    icon={Briefcase} 
+                    label="پروژه‌ها" 
+                    active={page === 'projects'} 
+                    onClick={() => handlePageChange('projects')} 
+                    locked={!canAccess(user.role, 'projects')}
+                 />
+                 <SidebarItem 
+                    icon={Wallet} 
+                    label="مالی و حسابداری" 
+                    active={page === 'finance'} 
+                    onClick={() => handlePageChange('finance')} 
+                    locked={!canAccess(user.role, 'finance')}
+                 />
+                 <SidebarItem 
+                    icon={Users} 
+                    label="تیم و پرسنل" 
+                    active={page === 'team'} 
+                    onClick={() => handlePageChange('team')} 
+                    locked={!canAccess(user.role, 'team')}
+                 />
                  
                  <div className="text-xs font-bold text-slate-400 mt-8 mb-4 px-4 uppercase tracking-wider">هوش مصنوعی</div>
-                 <SidebarItem icon={FileText} label="بیزینس پلن" active={page === 'business-plan'} onClick={() => setPage('business-plan')} badge="AI" />
-                 <SidebarItem icon={MessageSquare} label="چت با مدیر" active={page === 'chat'} onClick={() => setPage('chat')} />
+                 <SidebarItem 
+                    icon={FileText} 
+                    label="بیزینس پلن" 
+                    active={page === 'business-plan'} 
+                    onClick={() => handlePageChange('business-plan')} 
+                    badge="AI" 
+                    locked={!canAccess(user.role, 'business-plan')}
+                 />
+                 <SidebarItem 
+                    icon={MessageSquare} 
+                    label="چت با مدیر" 
+                    active={page === 'chat'} 
+                    onClick={() => handlePageChange('chat')} 
+                    locked={!canAccess(user.role, 'chat')}
+                 />
 
                  <div className="text-xs font-bold text-slate-400 mt-8 mb-4 px-4 uppercase tracking-wider">تنظیمات</div>
-                 <SidebarItem icon={Settings} label="تنظیمات سیستم" active={page === 'settings'} onClick={() => setPage('settings')} />
+                 <SidebarItem 
+                    icon={Settings} 
+                    label="تنظیمات سیستم" 
+                    active={page === 'settings'} 
+                    onClick={() => handlePageChange('settings')} 
+                    locked={!canAccess(user.role, 'settings')}
+                 />
              </div>
 
              <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800">
@@ -103,7 +167,6 @@ const App = () => {
         {/* Main Content */}
         <div className="flex-1 flex flex-col h-full relative overflow-hidden">
             <header className="h-20 flex items-center justify-between px-8 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md z-10 sticky top-0 border-b border-slate-100 dark:border-slate-800/50">
-               {/* Header content like Search or Breadcrumbs can go here */}
                <div className="text-sm font-medium text-slate-500 dark:text-slate-400 flex items-center gap-2">
                   <span className="opacity-50">سازمان</span> / <span className="dark:text-slate-200 font-bold">{page === 'dashboard' ? 'داشبورد مدیریتی' : page === 'projects' ? 'پروژه‌های عملیاتی' : page === 'finance' ? 'امور مالی و حسابداری' : page === 'team' ? 'منابع انسانی' : page === 'chat' ? 'دستیار هوشمند' : page === 'business-plan' ? 'بیزینس پلن استراتژیک' : 'تنظیمات سیستم'}</span>
                </div>

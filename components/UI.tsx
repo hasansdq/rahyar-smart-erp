@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrainCircuit, Cpu } from 'lucide-react';
+import { BrainCircuit, Cpu, Lock } from 'lucide-react';
 
 export const RahyarLogo = ({ size = 'md', className = '' }: { size?: 'sm' | 'md' | 'lg' | 'xl', className?: string }) => {
   const sizeClasses = {
@@ -71,19 +71,21 @@ export const ModernLoader = () => (
   </div>
 );
 
-export const SidebarItem = ({ icon: Icon, label, active, onClick, badge }: any) => (
+export const SidebarItem = ({ icon: Icon, label, active, onClick, badge, locked }: any) => (
   <button
     onClick={onClick}
     className={`relative group flex items-center w-full px-5 py-3.5 mb-2 rounded-2xl transition-all duration-300 ease-out ${
       active 
         ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/25 scale-[1.02]' 
-        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white'
+        : locked
+            ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed bg-slate-50/50 dark:bg-slate-900/20'
+            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white'
     }`}
   >
-    <div className={`p-1.5 rounded-xl transition-colors ${active ? 'bg-white/20' : 'group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/20'}`}>
+    <div className={`p-1.5 rounded-xl transition-colors ${active ? 'bg-white/20' : locked ? 'bg-transparent' : 'group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/20'}`}>
         <Icon 
         size={20} 
-        className={`transition-transform duration-300 ${active ? '' : 'group-hover:scale-110 group-hover:-rotate-6 text-slate-500 dark:text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400'}`} 
+        className={`transition-transform duration-300 ${active ? '' : locked ? '' : 'group-hover:scale-110 group-hover:-rotate-6 text-slate-500 dark:text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400'}`} 
         strokeWidth={active ? 2.5 : 2}
         />
     </div>
@@ -91,10 +93,14 @@ export const SidebarItem = ({ icon: Icon, label, active, onClick, badge }: any) 
       {label}
     </span>
     
-    {badge && (
+    {badge && !locked && (
         <span className="ms-auto bg-rose-500 text-white text-[10px] px-2 py-0.5 rounded-full shadow-sm animate-pulse font-bold">
             {badge}
         </span>
+    )}
+
+    {locked && (
+        <Lock size={14} className="ms-auto text-slate-400 dark:text-slate-600"/>
     )}
     
     {/* Active Indicator Dot - Only visible when active */}
@@ -127,3 +133,23 @@ export const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-lg' 
     </div>
   );
 };
+
+export const AccessDeniedModal = ({ isOpen, onClose, message }: { isOpen: boolean, onClose: () => void, message: string }) => {
+    if (!isOpen) return null;
+    return (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/70 backdrop-blur-md p-6 animate-fadeIn">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-sm w-full p-8 text-center shadow-2xl border border-red-100 dark:border-red-900/30 animate-shake">
+                <div className="w-20 h-20 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-6 text-red-500 dark:text-red-400">
+                    <Lock size={40} />
+                </div>
+                <h3 className="text-xl font-black text-slate-800 dark:text-white mb-2">دسترسی غیرمجاز</h3>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mb-8 leading-relaxed">
+                    {message}
+                </p>
+                <button onClick={onClose} className="w-full py-3.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-bold hover:shadow-lg transition-all active:scale-95">
+                    متوجه شدم
+                </button>
+            </div>
+        </div>
+    );
+}
