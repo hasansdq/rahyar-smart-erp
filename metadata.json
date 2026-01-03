@@ -1,0 +1,7 @@
+{
+  "name": "Samaneh Rahyar",
+  "description": "سامانه هوشمند رهیار - نرم‌افزار مدیریت منابع سازمانی مبتنی بر هوش مصنوعی",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
