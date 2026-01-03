@@ -1,24 +1,20 @@
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 
+// https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  // Use a fallback for process.cwd() to prevent build errors in some environments
-  const cwd = typeof process !== 'undefined' && (process as any).cwd ? (process as any).cwd() : '.';
-  const env = loadEnv(mode, cwd, '');
-  
+  const env = loadEnv(mode, (process as any).cwd(), '');
   return {
     plugins: [react()],
     define: {
-      // Polyfill process.env for the Google GenAI SDK
+      // This ensures process.env.API_KEY works in the client-side code
+      // as required by the coding guidelines.
       'process.env.API_KEY': JSON.stringify(env.API_KEY),
+      // Polyfill for other potential process.env usage
+      'process.env': {}
     },
     server: {
-      port: 3000,
-      host: true
-    },
-    build: {
-      outDir: 'dist',
-      sourcemap: false
+      port: 3000
     }
   };
 });
