@@ -1,3 +1,4 @@
+
 export enum UserRole {
   MANAGER = 'مدیر',
   ADMIN = 'ادمین',
@@ -38,7 +39,7 @@ export interface Project {
   deadline: string;
   progress: number; // 0 to 100
   managerId: string;
-  teamIds: string[];
+  teamIds: string[]; // List of User IDs assigned to this project
   risks: string[];
   tags: string[];
   aiAnalysis?: string;
@@ -65,9 +66,12 @@ export interface Transaction {
 
 export interface Report {
   id: string;
-  userId: string;
+  projectId: string; // Linked Project
+  userId: string; // Author
+  title: string;
   date: string;
   content: string;
+  attachments: string[]; // URLs or File Names
   aiFeedback?: string;
   score?: number;
 }

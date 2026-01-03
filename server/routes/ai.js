@@ -1,6 +1,7 @@
+
 import express from 'express';
 import { GoogleGenAI } from '@google/genai';
-import { Settings, KnowledgeFile, Project, ChatLog } from '../models.js';
+import { Settings, KnowledgeFile, Project, ChatLog, User, Report, Transaction, BusinessPlan } from '../models.js';
 import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -8,23 +9,61 @@ const API_KEY = process.env.API_KEY;
 const ai = new GoogleGenAI({ apiKey: API_KEY });
 
 const getSystemContext = async () => {
-  const settings = await Settings.findOne();
-  const knowledge = await KnowledgeFile.findAll();
-  const projects = await Project.findAll();
-  
-  // Construct RAG Context
-  const knowledgeContext = knowledge.map(k => `--- FILE: ${k.name} ---\n${k.content}`).join('\n\n');
-  const projectContext = JSON.stringify(projects.map(p => ({ title: p.title, status: p.status, progress: p.progress })));
-  
-  return `
-    ${settings?.systemPrompt || 'You are a helpful AI assistant.'}
-    
-    ORGANIZATIONAL DATA:
-    Projects: ${projectContext}
-    
-    KNOWLEDGE BASE (RAG):
-    ${knowledgeContext}
-  `;
+  try {
+      const [settings, knowledge, projects, users, reports, finance, businessPlan] = await Promise.all([
+          Settings.findOne(),
+          KnowledgeFile.findAll(),
+          Project.findAll(),
+          User.findAll({ attributes: ['name', 'role', 'department', 'skills', 'status'] }),
+          Report.findAll(),
+          Transaction.findAll(),
+          BusinessPlan.findOne({ order: [['updatedAt', 'DESC']] })
+      ]);
+      
+      const knowledgeContext = knowledge.map(k => `--- FILE: ${k.name} ---\n${k.content}`).join('\n\n');
+      
+      const projectData = projects.map(p => ({
+          title: p.title, status: p.status, progress: p.progress, manager: p.managerId, 
+          priority: p.priority, budget: p.budget, team: p.teamIds
+      }));
+
+      const reportData = reports.map(r => ({
+          project: r.projectId, author: r.userId, date: r.date, content: r.content
+      }));
+
+      const financeSummary = {
+          income: finance.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0),
+          expense: finance.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0),
+          transactions: finance.slice(-10) // Last 10 tx
+      };
+
+      return `
+        SYSTEM PROMPT: ${settings?.systemPrompt || 'You are an intelligent ERP Assistant.'}
+        
+        === ORGANIZATIONAL DATA ===
+        
+        [TEAM MEMBERS]
+        ${JSON.stringify(users)}
+
+        [PROJECTS]
+        ${JSON.stringify(projectData)}
+
+        [REPORTS]
+        ${JSON.stringify(reportData)}
+
+        [FINANCIAL SUMMARY]
+        ${JSON.stringify(financeSummary)}
+
+        [BUSINESS PLAN]
+        ${businessPlan ? businessPlan.content.substring(0, 2000) : 'Not Available'}
+
+        === KNOWLEDGE BASE (RAG) ===
+        ${knowledgeContext.substring(0, 50000)} // Safety truncate
+      `;
+  } catch (e) {
+      console.error("Context Gen Error:", e);
+      return "Error generating context.";
+  }
 };
 
 router.post('/generate', authenticateToken, async (req, res) => {
@@ -66,10 +105,11 @@ router.post('/chat', authenticateToken, async (req, res) => {
       ]
     });
 
-    await ChatLog.create({
+    // Fire and forget log
+    ChatLog.create({
         id: Math.random().toString(36),
         userId: req.user.id,
-        userName: 'User', // In real app, fetch from User table
+        userName: req.user.name, 
         userRole: req.user.role,
         timestamp: new Date().toISOString(),
         message: message,

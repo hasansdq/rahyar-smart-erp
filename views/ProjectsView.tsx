@@ -1,22 +1,35 @@
+
 import React, { useState, useEffect } from 'react';
-import { User, Project, ProjectStatus } from '../types';
+import { User, Project, ProjectStatus, Report, UserRole } from '../types';
 import { db } from '../services/db';
 import { suggestProjectDetails } from '../services/ai';
 import { Card, Modal } from '../components/UI';
 import { formatMoney } from '../utils/helpers';
-import { Plus, Edit2, Trash2, Sparkles } from 'lucide-react';
+import { Plus, Edit2, Trash2, Sparkles, FileText, UserPlus, CheckCircle, Upload } from 'lucide-react';
 
 const ProjectsView = ({ user }: { user: User }) => {
   const [projects, setProjects] = useState(db.getProjects());
+  const [users, setUsers] = useState(db.getUsers());
+  const [reports, setReports] = useState(db.getReports());
+  
+  // Project Modal
   const [showModal, setShowModal] = useState(false);
   const [editingProject, setEditingProject] = useState<Partial<Project>>({});
   const [aiTopic, setAiTopic] = useState('');
   const [loadingAi, setLoadingAi] = useState(false);
 
+  // Report Modal
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [activeProjectForReport, setActiveProjectForReport] = useState<Project | null>(null);
+  const [newReport, setNewReport] = useState<Partial<Report>>({});
+  const [projectReports, setProjectReports] = useState<Report[]>([]);
+
   // Subscribe to real-time updates
   useEffect(() => {
      const unsubscribe = db.subscribe(() => {
          setProjects([...db.getProjects()]);
+         setUsers([...db.getUsers()]);
+         setReports([...db.getReports()]);
      });
      return unsubscribe;
   }, []);
@@ -71,6 +84,44 @@ const ProjectsView = ({ user }: { user: User }) => {
     }
   }
 
+  const toggleTeamMember = (uid: string) => {
+      const current = editingProject.teamIds || [];
+      if(current.includes(uid)) {
+          setEditingProject({...editingProject, teamIds: current.filter(id => id !== uid)});
+      } else {
+          setEditingProject({...editingProject, teamIds: [...current, uid]});
+      }
+  };
+
+  const openReportModal = (p: Project) => {
+      setActiveProjectForReport(p);
+      setProjectReports(reports.filter(r => r.projectId === p.id));
+      setNewReport({
+          date: new Date().toLocaleDateString('fa-IR'),
+          title: `گزارش پیشرفت - ${new Date().toLocaleDateString('fa-IR')}`,
+          attachments: []
+      });
+      setShowReportModal(true);
+  };
+
+  const submitReport = async () => {
+      if(!newReport.content || !activeProjectForReport) return;
+      
+      const reportData: Report = {
+          id: Math.random().toString(36).substr(2, 9),
+          projectId: activeProjectForReport.id,
+          userId: user.id,
+          title: newReport.title || 'گزارش',
+          date: newReport.date || '',
+          content: newReport.content,
+          attachments: newReport.attachments || []
+      };
+
+      await db.addReport(reportData);
+      setNewReport({});
+      setShowReportModal(false);
+  };
+
   const inputStyle = "w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 transition-all";
 
   return (
@@ -80,14 +131,16 @@ const ProjectsView = ({ user }: { user: User }) => {
             <h2 className="text-2xl font-bold dark:text-white">پروژه‌ها</h2>
             <p className="text-slate-500">مدیریت و پیگیری پروژه‌های سازمانی</p>
          </div>
-         <button onClick={() => { setEditingProject({ status: ProjectStatus.PLANNING }); setShowModal(true); }} className="bg-blue-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-blue-700">
-            <Plus size={18} /> پروژه جدید
-         </button>
+         {(user.role === UserRole.MANAGER || user.role === UserRole.ADMIN) && (
+            <button onClick={() => { setEditingProject({ status: ProjectStatus.PLANNING, teamIds: [] }); setShowModal(true); }} className="bg-blue-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-blue-700">
+                <Plus size={18} /> پروژه جدید
+            </button>
+         )}
        </div>
 
        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {projects.map(p => (
-            <div key={p.id} className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow">
+            <div key={p.id} className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
                <div className="flex justify-between items-start mb-4">
                   <div>
                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold mb-2 inline-block
@@ -98,8 +151,15 @@ const ProjectsView = ({ user }: { user: User }) => {
                     <h3 className="font-bold text-lg dark:text-white">{p.title}</h3>
                   </div>
                   <div className="flex gap-1">
-                     <button onClick={() => { setEditingProject(p); setShowModal(true); }} className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg"><Edit2 size={16}/></button>
-                     <button onClick={() => handleDelete(p.id)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={16}/></button>
+                     <button onClick={() => openReportModal(p)} className="p-1.5 text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg" title="گزارشات">
+                        <FileText size={16}/>
+                     </button>
+                     {(user.role === UserRole.MANAGER || user.role === UserRole.ADMIN) && (
+                        <>
+                            <button onClick={() => { setEditingProject(p); setShowModal(true); }} className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg"><Edit2 size={16}/></button>
+                            <button onClick={() => handleDelete(p.id)} className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg"><Trash2 size={16}/></button>
+                        </>
+                     )}
                   </div>
                </div>
                
@@ -115,10 +175,19 @@ const ProjectsView = ({ user }: { user: User }) => {
                  </div>
                  
                  <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-700 mt-4">
-                    <div className="flex -space-x-2 space-x-reverse">
-                       {p.teamIds.slice(0,3).map((uid, i) => (
-                          <div key={i} className="w-8 h-8 rounded-full bg-slate-200 border-2 border-white dark:border-slate-800 flex items-center justify-center text-xs font-bold text-slate-600">U</div>
-                       ))}
+                    <div className="flex items-center gap-2">
+                        <div className="flex -space-x-2 space-x-reverse">
+                        {(p.teamIds || []).slice(0,4).map((uid, i) => {
+                            const u = users.find(usr => usr.id === uid);
+                            return (
+                                <div key={i} className="w-8 h-8 rounded-full bg-slate-200 border-2 border-white dark:border-slate-800 flex items-center justify-center text-xs font-bold text-slate-600" title={u?.name}>
+                                    {u ? u.name.charAt(0) : 'U'}
+                                </div>
+                            );
+                        })}
+                        {(p.teamIds || []).length > 4 && <div className="w-8 h-8 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center text-xs text-slate-500">+{p.teamIds.length - 4}</div>}
+                        </div>
+                        {user.role !== UserRole.EMPLOYEE && <span className="text-[10px] text-slate-400">تخصیص یافته</span>}
                     </div>
                     <div className="text-xs font-mono text-slate-500">{formatMoney(p.budget)}</div>
                  </div>
@@ -127,6 +196,7 @@ const ProjectsView = ({ user }: { user: User }) => {
           ))}
        </div>
 
+       {/* Edit/Create Modal */}
        <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editingProject.id ? 'ویرایش پروژه' : 'پروژه جدید'}>
           <div className="space-y-4">
              {!editingProject.id && (
@@ -149,6 +219,21 @@ const ProjectsView = ({ user }: { user: User }) => {
              <div>
                 <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">توضیحات</label>
                 <textarea className={inputStyle} rows={3} value={editingProject.description || ''} onChange={e => setEditingProject({...editingProject, description: e.target.value})} />
+             </div>
+
+             {/* Team Allocation */}
+             <div>
+                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 flex items-center gap-2"><UserPlus size={14}/> تخصیص تیم</label>
+                <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto custom-scrollbar p-2 border border-slate-200 dark:border-slate-700 rounded-xl">
+                    {users.map(u => (
+                        <div key={u.id} onClick={() => toggleTeamMember(u.id)} className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${editingProject.teamIds?.includes(u.id) ? 'bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
+                            <div className={`w-4 h-4 rounded border flex items-center justify-center ${editingProject.teamIds?.includes(u.id) ? 'bg-blue-500 border-blue-500 text-white' : 'border-slate-300'}`}>
+                                {editingProject.teamIds?.includes(u.id) && <CheckCircle size={10}/>}
+                            </div>
+                            <span className="text-xs dark:text-slate-300">{u.name} <span className="text-slate-400">({u.role})</span></span>
+                        </div>
+                    ))}
+                </div>
              </div>
 
              <div className="grid grid-cols-2 gap-4">
@@ -174,6 +259,51 @@ const ProjectsView = ({ user }: { user: User }) => {
                 <button onClick={handleSave} className="bg-blue-600 text-white px-8 py-2.5 rounded-xl font-bold hover:shadow-lg transition-all">ذخیره</button>
              </div>
           </div>
+       </Modal>
+
+       {/* Reports Modal */}
+       <Modal isOpen={showReportModal} onClose={() => setShowReportModal(false)} title={`گزارشات: ${activeProjectForReport?.title}`} maxWidth="max-w-2xl">
+            <div className="space-y-6">
+                {/* Report Submission for Employee */}
+                {(user.role === UserRole.EMPLOYEE || user.role === UserRole.MANAGER) && (
+                    <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+                        <h4 className="font-bold text-sm mb-3 dark:text-white flex items-center gap-2"><Upload size={16}/> ارسال گزارش جدید</h4>
+                        <div className="space-y-3">
+                            <input className={inputStyle} placeholder="عنوان گزارش" value={newReport.title} onChange={e => setNewReport({...newReport, title: e.target.value})}/>
+                            <textarea className={inputStyle} rows={3} placeholder="شرح فعالیت‌های انجام شده..." value={newReport.content} onChange={e => setNewReport({...newReport, content: e.target.value})} />
+                            <div className="flex justify-end">
+                                <button onClick={submitReport} disabled={!newReport.content} className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-bold disabled:opacity-50">ارسال گزارش</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
+                    <h4 className="font-bold text-sm mb-4 dark:text-slate-300">سوابق گزارشات</h4>
+                    <div className="space-y-4 max-h-60 overflow-y-auto custom-scrollbar">
+                        {projectReports.length === 0 ? (
+                            <div className="text-center text-slate-400 text-sm">هیچ گزارشی ثبت نشده است.</div>
+                        ) : (
+                            projectReports.map(r => (
+                                <div key={r.id} className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-100 dark:border-slate-700">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div className="font-bold text-sm dark:text-white">{r.title}</div>
+                                        <div className="text-xs text-slate-400">{r.date}</div>
+                                    </div>
+                                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">{r.content}</p>
+                                    <div className="mt-2 flex gap-2">
+                                         {users.find(u => u.id === r.userId) && (
+                                             <span className="text-[10px] bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-md text-slate-500 dark:text-slate-400">
+                                                 توسط: {users.find(u => u.id === r.userId)?.name}
+                                             </span>
+                                         )}
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+            </div>
        </Modal>
     </div>
   );

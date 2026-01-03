@@ -1,3 +1,4 @@
+
 import { SystemData, User, Project, Task, Transaction, Report, Contract, ChatLog, KnowledgeFile, AppSettings } from '../types';
 import api from './api';
 
@@ -40,23 +41,17 @@ class DBService {
 
   async init(): Promise<User | null> {
     try {
-        // This request sends the HttpOnly cookie automatically
         const res = await api.get('/data');
-        
         const { currentUser, ...systemData } = res.data;
         this.data = systemData;
         this.isInitialized = true;
         this.notify();
-        
         return currentUser || null;
     } catch (e: any) {
-        // If 401, it just means user is not logged in. Return null cleanly.
         if (e.isAuthError || (e.response && e.response.status === 401)) {
             this.isInitialized = false;
             return null;
         }
-        
-        // Log other errors but don't crash the app
         console.warn("Init failed:", e);
         this.isInitialized = false;
         return null;
@@ -66,7 +61,6 @@ class DBService {
   async login(username: string, password: string): Promise<{user?: User, error?: string}> {
     try {
         await api.post('/auth/login', { username, password });
-        // After successful login (cookie set), fetch data
         const user = await this.init(); 
         if (user) {
             return { user };
@@ -101,7 +95,7 @@ class DBService {
       this.notify();
   }
 
-  // Getters & Setters
+  // Getters
   getData(): SystemData { return this.data; }
   getUsers(): User[] { return this.data.users; }
   getProjects(): Project[] { return this.data.projects; }
@@ -114,6 +108,7 @@ class DBService {
   getKnowledgeBase(): KnowledgeFile[] { return this.data.knowledgeBase; }
   getSettings(): AppSettings { return this.data.settings; }
 
+  // Actions
   async addUser(user: User) { await api.post('/users', user); this.data.users.push(user); this.notify(); }
   async updateUser(user: User) { await api.put(`/users/${user.id}`, user); this.data.users = this.data.users.map(u => u.id === user.id ? user : u); this.notify(); }
   async deleteUser(userId: string) { await api.delete(`/users/${userId}`); this.data.users = this.data.users.filter(u => u.id !== userId); this.notify(); }
@@ -130,8 +125,19 @@ class DBService {
   async deleteTransaction(id: string) { await api.delete(`/transactions/${id}`); this.data.finance = this.data.finance.filter(t => t.id !== id); this.notify(); }
 
   async addContract(contract: Contract) { this.data.contracts.push(contract); this.notify(); }
-  async addReport(report: Report) { this.data.reports.push(report); this.notify(); }
-  async setBusinessPlan(plan: string) { this.data.businessPlan = plan; this.notify(); }
+  
+  async addReport(report: Report) { 
+      const res = await api.post('/reports', report);
+      this.data.reports.push(res.data); 
+      this.notify();
+  }
+  
+  async setBusinessPlan(plan: string) { 
+      await api.post('/business-plan', { content: plan });
+      this.data.businessPlan = plan; 
+      this.notify();
+  }
+  
   async addChatLog(log: ChatLog) { this.data.chatLogs.push(log); this.notify(); }
 
   async uploadKnowledgeFile(file: File) { 

@@ -1,3 +1,4 @@
+
 import { Sequelize, DataTypes } from 'sequelize';
 
 // Database Connection
@@ -42,7 +43,7 @@ const Project = sequelize.define('Project', {
   deadline: { type: DataTypes.STRING },
   progress: { type: DataTypes.INTEGER },
   managerId: { type: DataTypes.STRING },
-  teamIds: { type: DataTypes.JSON },
+  teamIds: { type: DataTypes.JSON }, // Stores array of user IDs
   risks: { type: DataTypes.JSON },
   tags: { type: DataTypes.JSON },
   aiAnalysis: { type: DataTypes.TEXT }
@@ -69,9 +70,12 @@ const Transaction = sequelize.define('Transaction', {
 
 const Report = sequelize.define('Report', {
   id: { type: DataTypes.STRING, primaryKey: true },
+  projectId: { type: DataTypes.STRING },
   userId: { type: DataTypes.STRING },
+  title: { type: DataTypes.STRING },
   date: { type: DataTypes.STRING },
   content: { type: DataTypes.TEXT },
+  attachments: { type: DataTypes.JSON }, // Array of file names/paths
   aiFeedback: { type: DataTypes.TEXT },
   score: { type: DataTypes.INTEGER }
 });
@@ -112,6 +116,12 @@ const Settings = sequelize.define('Settings', {
   themeMode: { type: DataTypes.STRING }
 });
 
+const BusinessPlan = sequelize.define('BusinessPlan', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  content: { type: DataTypes.TEXT('long') },
+  updatedAt: { type: DataTypes.DATE }
+});
+
 const initDB = async () => {
   try {
     console.log('Attempting to connect to database...');
@@ -124,4 +134,4 @@ const initDB = async () => {
   }
 };
 
-export { sequelize, User, Project, Task, Transaction, Report, Contract, ChatLog, KnowledgeFile, Settings, initDB };
+export { sequelize, User, Project, Task, Transaction, Report, Contract, ChatLog, KnowledgeFile, Settings, BusinessPlan, initDB };
