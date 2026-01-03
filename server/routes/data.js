@@ -65,7 +65,14 @@ router.get('/data', authenticateToken, async (req, res) => {
         });
     }
 
-    const tasks = await Task.findAll();
+    // Tasks Filtering Logic
+    let tasks;
+    if (isManager || isAdmin) {
+        tasks = await Task.findAll();
+    } else {
+        tasks = await Task.findAll({ where: { assigneeId: userId } });
+    }
+
     const chatLogs = await ChatLog.findAll();
     const knowledgeBase = await KnowledgeFile.findAll({ attributes: ['id', 'name', 'size', 'uploadDate'] });
     
@@ -117,6 +124,22 @@ router.post('/reports', authenticateToken, async (req, res) => {
     } catch(e) { res.status(500).json({error: e.message}); }
 });
 
+// Specific Route for Task Status/Report Update (for Employees)
+router.patch('/tasks/:id/submit', authenticateToken, async (req, res) => {
+    try {
+        const { status, report, completedDate } = req.body;
+        const task = await Task.findByPk(req.params.id);
+        
+        // Check ownership if employee
+        if (req.user.role === 'کارمند' && task.assigneeId !== req.user.id) {
+            return res.status(403).json({ error: 'Access Denied' });
+        }
+
+        await task.update({ status, report, completedDate });
+        res.json({ success: true });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 // Specific Route for Business Plan
 router.post('/business-plan', authenticateToken, async (req, res) => {
     if(req.user.role !== 'مدیر') return res.status(403).json({error: 'Access Denied'});
@@ -129,8 +152,8 @@ router.post('/business-plan', authenticateToken, async (req, res) => {
 
 // Apply CRUD routes
 createCrudRoutes(User, 'users', ['مدیر', 'ادمین']); 
-createCrudRoutes(Project, 'projects', ['مدیر', 'ادمین']); // Only admins/managers manage projects structure
-createCrudRoutes(Task, 'tasks');
+createCrudRoutes(Project, 'projects', ['مدیر', 'ادمین']); 
+createCrudRoutes(Task, 'tasks', ['مدیر', 'ادمین']); // Only Managers/Admins can full Create/Update/Delete
 createCrudRoutes(Transaction, 'transactions', ['مدیر', 'ادمین']); 
 createCrudRoutes(Settings, 'settings', ['مدیر', 'ادمین']);
 

@@ -51,11 +51,15 @@ const Project = sequelize.define('Project', {
 
 const Task = sequelize.define('Task', {
   id: { type: DataTypes.STRING, primaryKey: true },
-  projectId: { type: DataTypes.STRING },
+  projectId: { type: DataTypes.STRING }, // Optional
   title: { type: DataTypes.STRING },
+  description: { type: DataTypes.TEXT },
   assigneeId: { type: DataTypes.STRING },
   status: { type: DataTypes.STRING },
-  dueDate: { type: DataTypes.STRING },
+  priority: { type: DataTypes.STRING },
+  deadline: { type: DataTypes.STRING },
+  attachments: { type: DataTypes.JSON }, // Array of file names
+  report: { type: DataTypes.TEXT }, // Employee report
   completedDate: { type: DataTypes.STRING }
 });
 

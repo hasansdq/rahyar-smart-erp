@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { User, UserRole, ProjectStatus } from '../types';
 import { db } from '../services/db';
@@ -166,7 +167,7 @@ const Dashboard = ({ user }: { user: User }) => {
                      <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${t.status === 'done' ? 'bg-green-500' : 'bg-amber-500'}`}></div>
                      <div>
                         <div className="text-sm font-bold dark:text-slate-200">{t.title}</div>
-                        <div className="text-xs text-slate-400 mt-1">سررسید: {t.dueDate}</div>
+                        <div className="text-xs text-slate-400 mt-1">سررسید: {t.deadline}</div>
                      </div>
                   </div>
                ))}

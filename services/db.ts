@@ -119,6 +119,18 @@ class DBService {
 
   async addTask(task: Task) { await api.post('/tasks', task); this.data.tasks.push(task); this.notify(); }
   async updateTask(task: Task) { await api.put(`/tasks/${task.id}`, task); this.data.tasks = this.data.tasks.map(t => t.id === task.id ? task : t); this.notify(); }
+  async deleteTask(taskId: string) { await api.delete(`/tasks/${taskId}`); this.data.tasks = this.data.tasks.filter(t => t.id !== taskId); this.notify(); }
+  
+  async updateTaskStatus(taskId: string, status: 'done'|'todo', report: string) {
+      const completedDate = status === 'done' ? new Date().toLocaleDateString('fa-IR') : undefined;
+      await api.patch(`/tasks/${taskId}/submit`, { status, report, completedDate });
+      
+      const idx = this.data.tasks.findIndex(t => t.id === taskId);
+      if(idx !== -1) {
+          this.data.tasks[idx] = { ...this.data.tasks[idx], status, report, completedDate };
+          this.notify();
+      }
+  }
 
   async addTransaction(tx: Transaction) { await api.post('/transactions', tx); this.data.finance.push(tx); this.notify(); }
   async updateTransaction(tx: Transaction) { await api.put(`/transactions/${tx.id}`, tx); this.data.finance = this.data.finance.map(t => t.id === tx.id ? tx : t); this.notify(); }

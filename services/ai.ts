@@ -105,6 +105,8 @@ export const consultFinance = async (query: string): Promise<string> => {
 
 export const chatWithManager = async (message: string, isVoice: boolean, attachment?: File): Promise<string> => {
   try {
+    // Note: Attachment handling requires multipart/form-data logic on server, 
+    // simplified here to text for the modular transition.
     const response = await api.post('/ai/chat', {
       message: message
     });
@@ -125,6 +127,21 @@ export const getSmartAlerts = async (): Promise<{warning: string, suggestion: st
     return null;
   }
 };
+
+export const analyzeTasks = async (): Promise<string> => {
+    try {
+        const response = await api.post('/ai/generate', {
+            prompt: `
+                Analyze all tasks in the system. 
+                Identify bottlenecks (e.g., users with too many pending tasks), overdue deadlines, and quality of reports submitted.
+                Provide a short, professional analytical summary in Persian (Farsi) about the workforce efficiency.
+            `
+        });
+        return response.data.text || "";
+    } catch(e) {
+        return "خطا در تحلیل وظایف.";
+    }
+}
 
 // --- LIVE API CLIENT (via Socket.io Proxy) ---
 

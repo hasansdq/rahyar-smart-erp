@@ -7,13 +7,14 @@ import { SidebarItem, RahyarLogo, SplashScreen, AccessDeniedModal, ModernLoader 
 import { canAccess, getAccessMessage, PageId } from './utils/permissions';
 import { 
   LayoutDashboard, Users, Briefcase, FileText, Settings, 
-  LogOut, Wallet, MessageSquare
+  LogOut, Wallet, MessageSquare, CheckSquare
 } from 'lucide-react';
 
 // Import Views
 import LoginScreen from './views/LoginScreen';
 import Dashboard from './views/Dashboard';
 import ProjectsView from './views/ProjectsView';
+import TasksView from './views/TasksView';
 import FinanceView from './views/FinanceView';
 import TeamView from './views/TeamView';
 import ChatView from './views/ChatView';
@@ -145,6 +146,13 @@ const App = () => {
                         locked={!canAccess(user.role, 'projects')}
                     />
                     <SidebarItem 
+                        icon={CheckSquare} 
+                        label="وظایف من" 
+                        active={page === 'tasks'} 
+                        onClick={() => handlePageChange('tasks')} 
+                        locked={!canAccess(user.role, 'tasks')}
+                    />
+                    <SidebarItem 
                         icon={Wallet} 
                         label="مالی و حسابداری" 
                         active={page === 'finance'} 
@@ -206,7 +214,7 @@ const App = () => {
             <div className="flex-1 flex flex-col h-full relative overflow-hidden">
                 <header className="h-20 flex items-center justify-between px-8 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md z-10 sticky top-0 border-b border-slate-100 dark:border-slate-800/50">
                 <div className="text-sm font-medium text-slate-500 dark:text-slate-400 flex items-center gap-2">
-                    <span className="opacity-50">سازمان</span> / <span className="dark:text-slate-200 font-bold">{page === 'dashboard' ? 'داشبورد مدیریتی' : page === 'projects' ? 'پروژه‌های عملیاتی' : page === 'finance' ? 'امور مالی و حسابداری' : page === 'team' ? 'منابع انسانی' : page === 'chat' ? 'دستیار هوشمند' : page === 'business-plan' ? 'بیزینس پلن استراتژیک' : 'تنظیمات سیستم'}</span>
+                    <span className="opacity-50">سازمان</span> / <span className="dark:text-slate-200 font-bold">{page === 'dashboard' ? 'داشبورد مدیریتی' : page === 'projects' ? 'پروژه‌های عملیاتی' : page === 'finance' ? 'امور مالی و حسابداری' : page === 'team' ? 'منابع انسانی' : page === 'chat' ? 'دستیار هوشمند' : page === 'tasks' ? 'مدیریت وظایف' : page === 'business-plan' ? 'بیزینس پلن استراتژیک' : 'تنظیمات سیستم'}</span>
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1.5 rounded-full border border-emerald-100 dark:border-emerald-800/50 shadow-sm">
@@ -222,6 +230,7 @@ const App = () => {
                 <main className="flex-1 overflow-y-auto p-8 scroll-smooth custom-scrollbar">
                 {page === 'dashboard' && <Dashboard user={user} />}
                 {page === 'projects' && <ProjectsView user={user} />}
+                {page === 'tasks' && <TasksView user={user} />}
                 {page === 'finance' && <FinanceView user={user} />}
                 {page === 'team' && <TeamView user={user} />}
                 {page === 'chat' && <ChatView user={user} />}

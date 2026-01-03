@@ -1,7 +1,7 @@
 
 import express from 'express';
 import { GoogleGenAI } from '@google/genai';
-import { Settings, KnowledgeFile, Project, ChatLog, User, Report, Transaction, BusinessPlan } from '../models.js';
+import { Settings, KnowledgeFile, Project, ChatLog, User, Report, Transaction, BusinessPlan, Task } from '../models.js';
 import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -10,14 +10,15 @@ const ai = new GoogleGenAI({ apiKey: API_KEY });
 
 const getSystemContext = async () => {
   try {
-      const [settings, knowledge, projects, users, reports, finance, businessPlan] = await Promise.all([
+      const [settings, knowledge, projects, users, reports, finance, businessPlan, tasks] = await Promise.all([
           Settings.findOne(),
           KnowledgeFile.findAll(),
           Project.findAll(),
           User.findAll({ attributes: ['name', 'role', 'department', 'skills', 'status'] }),
           Report.findAll(),
           Transaction.findAll(),
-          BusinessPlan.findOne({ order: [['updatedAt', 'DESC']] })
+          BusinessPlan.findOne({ order: [['updatedAt', 'DESC']] }),
+          Task.findAll()
       ]);
       
       const knowledgeContext = knowledge.map(k => `--- FILE: ${k.name} ---\n${k.content}`).join('\n\n');
@@ -25,6 +26,17 @@ const getSystemContext = async () => {
       const projectData = projects.map(p => ({
           title: p.title, status: p.status, progress: p.progress, manager: p.managerId, 
           priority: p.priority, budget: p.budget, team: p.teamIds
+      }));
+
+      // Enhanced Task Context for AI
+      const taskData = tasks.map(t => ({
+          title: t.title,
+          assignee: users.find(u => u.id === t.assigneeId)?.name || t.assigneeId,
+          status: t.status,
+          priority: t.priority,
+          deadline: t.deadline,
+          description: t.description,
+          employeeReport: t.report || "No report yet."
       }));
 
       const reportData = reports.map(r => ({
@@ -47,6 +59,9 @@ const getSystemContext = async () => {
 
         [PROJECTS]
         ${JSON.stringify(projectData)}
+
+        [TASKS & PROGRESS]
+        ${JSON.stringify(taskData)}
 
         [REPORTS]
         ${JSON.stringify(reportData)}

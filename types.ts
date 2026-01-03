@@ -47,12 +47,16 @@ export interface Project {
 
 export interface Task {
   id: string;
-  projectId: string;
+  projectId?: string; // Optional now
   title: string;
+  description: string;
   assigneeId: string;
   status: 'todo' | 'in-progress' | 'done';
-  dueDate: string;
+  priority: 'low' | 'medium' | 'high';
+  deadline: string; // Persian Date
   completedDate?: string;
+  attachments: string[]; // URLs/Names of PDF files
+  report?: string; // Employee's report
 }
 
 export interface Transaction {
