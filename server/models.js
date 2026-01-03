@@ -1,8 +1,8 @@
 import { Sequelize, DataTypes } from 'sequelize';
 
 // Database Connection
-// Using the provided Railway internal URL
-const sequelize = new Sequelize('mysql://root:TTSSOgqnxNqkdbCHsJPPkSrwsHQOvIjg@mysql.railway.internal:3306/railway', {
+// Using the provided Railway public URL
+const sequelize = new Sequelize('mysql://root:TTSSOgqnxNqkdbCHsJPPkSrwsHQOvIjg@turntable.proxy.rlwy.net:53395/railway', {
   dialect: 'mysql',
   logging: false, // Disable logging to keep console clean, set to console.log for debugging
   pool: {
