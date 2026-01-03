@@ -1,5 +1,12 @@
 <div align="center">
-<img  alt="GHBanner" src="https://raw.githubusercontent.com/hasansdq/rahyar-smart-erp/refs/heads/main/assets/images/rahyar-poster.jpg" style="border-radius:12px;" />
+<p align="center">
+  <img
+    src="https://raw.githubusercontent.com/hasansdq/rahyar-smart-erp/main/assets/images/rahyar-poster.jpg"
+    alt="Rahyar Smart ERP"
+    width="90%"
+  />
+</p>
+
 </div>
 
 # Run and deploy your AI Studio app
