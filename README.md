@@ -9,70 +9,31 @@
 
 </div>
 
-سامانه هوشمند رهیار
-ERP مینیمال هوشمند مبتنی بر هوش مصنوعی
+ <h1>سامانه هوشمند رهیار</h1>
+<h3>ERP مینیمال هوشمند مبتنی بر هوش مصنوعی</h3>
 
-Rahyar Smart ERP
-A Minimal AI-Powered ERP System
+<p>
+<strong>سامانه هوشمند رهیار</strong> یک نرم‌افزار آنلاین ERP مینیمال مبتنی بر هوش مصنوعی است که با هدف ساده‌سازی مدیریت و تصمیم‌سازی در کسب‌وکارهای کوچک و متوسط توسعه داده شده است. این سیستم تلاش می‌کند به‌جای پیچیدگی‌های رایج ERPهای سنتی، هسته اصلی فرآیندهای کسب‌وکار را به‌صورت ساده، شفاف و یکپارچه پوشش دهد.
+</p>
 
-معرفی پروژه | Project Overview
+<p>
+رهیار یک ابزار صرفاً ثبت اطلاعات نیست، بلکه با تحلیل داده‌های واقعی ثبت‌شده در سیستم، بینش‌های مدیریتی، هشدارهای هوشمند و پیشنهادهای قابل اقدام ارائه می‌دهد. ساختار سیستم به‌صورت نقش‌محور طراحی شده و کاربران مختلف (مدیر، ادمین و کارمند) بر اساس سطح دسترسی خود، تجربه و امکانات متفاوتی دریافت می‌کنند.
+</p>
 
-سامانه هوشمند رهیار یک نرم‌افزار آنلاین ERP مینیمال مبتنی بر هوش مصنوعی است که با هدف ساده‌سازی مدیریت و تصمیم‌سازی در کسب‌وکارهای کوچک و متوسط توسعه داده شده است. این سیستم تلاش می‌کند به‌جای پیچیدگی‌های رایج ERPهای سنتی، هسته‌ی اصلی فرآیندهای کسب‌وکار را به‌صورت ساده، شفاف و یکپارچه پوشش دهد و هم‌زمان با تحلیل داده‌ها، بینش مدیریتی قابل استفاده ارائه کند.
-پروژه در حال حاضر در مرحله MVP قرار دارد.
+<p>
+این پروژه به‌صورت <strong>SAAS آنلاین</strong> و با استفاده از <strong>Node.js</strong> توسعه یافته و در حال حاضر در <strong>مرحله MVP</strong> قرار دارد. تمرکز نسخه فعلی بر پیاده‌سازی هسته اصلی سیستم، منطق نقش‌محور، تحلیل‌های هوش مصنوعی و تجربه کاربری اولیه است.
+</p>
 
-Rahyar Smart ERP is a minimal AI-powered online ERP system designed to simplify business management and decision-making for small and medium-sized enterprises. Instead of complex and heavy traditional ERP systems, Rahyar focuses on core business processes and provides actionable insights through intelligent data analysis.
-The project is currently in the MVP stage.
+<p>
+هدف اصلی رهیار، ارائه یک ERP سبک، قابل فهم و هوشمند است که به مدیران کمک کند بدون درگیر شدن با ابزارهای پراکنده و گزارش‌های پیچیده، دید دقیق‌تری نسبت به وضعیت کسب‌وکار خود داشته باشند و تصمیم‌های آگاهانه‌تری اتخاذ کنند.
+</p>
 
-قابلیت‌ها | Features
-
-مدیریت پروژه‌ها و فعالیت‌ها
-
-مدیریت وظایف و پیگیری عملکرد تیم
-
-مدیریت تیم و منابع انسانی به‌صورت نقش‌محور
-
-مدیریت مالی ساده (درآمدها و هزینه‌ها)
-
-ثبت و تحلیل گزارش‌های کاری
-
-هشدارها و پیشنهادهای هوشمند مدیریتی
-
-چت‌بات هوش مصنوعی متنی و صوتی برای مدیر
-
-چت‌بات متنی اختصاصی برای کارمندان
-
-سیستم نقش‌محور (مدیر، ادمین، کارمند)
-
-نقش هوش مصنوعی | AI Capabilities
-
-در سامانه رهیار، هوش مصنوعی صرفاً یک ابزار پاسخ‌گو نیست، بلکه به‌عنوان یک تحلیل‌گر و دستیار تصمیم‌ساز عمل می‌کند. سیستم با استفاده از داده‌های ثبت‌شده در بخش‌های مختلف، الگوها، ریسک‌ها و فرصت‌ها را شناسایی کرده و پیشنهادهای مدیریتی قابل اقدام ارائه می‌دهد.
-
-In Rahyar, artificial intelligence acts as an analytical and decision-support assistant, not just a chatbot. It analyzes real business data to detect patterns, risks, and opportunities, providing practical and context-aware recommendations.
-
-مشخصات فنی | Technical Stack
-
-Backend Framework: Node.js
-
-Programming Language: JavaScript (JS)
-
-Database: MySQL
-
-AI Engine: Gemini
-
-Server / Deployment: Railway
-
-Architecture: Online SAAS
-
-Project Status: MVP
-
-وضعیت پروژه | Project Status
-
-این مخزن شامل نسخه MVP سامانه هوشمند رهیار است. تمرکز این نسخه بر پیاده‌سازی هسته اصلی سیستم، منطق نقش‌محور، تحلیل‌های هوش مصنوعی و تجربه کاربری اولیه است. در نسخه‌های بعدی، قابلیت‌ها تکمیل و بهینه‌سازی خواهند شد.
-
-This repository contains the MVP version of Rahyar Smart ERP. The current focus is on core system logic, role-based access, AI-driven analysis, and initial user experience. Further enhancements and features are planned for future versions.
-
-هدف پروژه | Project Goal
-
-هدف اصلی این پروژه، ارائه یک ERP سبک، قابل فهم و هوشمند است که بتواند بدون پیچیدگی‌های غیرضروری، به مدیران کمک کند دید دقیق‌تری نسبت به وضعیت کسب‌وکار خود داشته باشند و تصمیم‌های آگاهانه‌تری اتخاذ کنند.
-
-The main goal of this project is to provide a lightweight, understandable, and intelligent ERP system that helps business owners gain better insights and make informed decisions without unnecessary complexity.
+<h3>مشخصات فنی</h3>
+<ul>
+  <li>Backend Framework: Node.js</li>
+  <li>Programming Language: JavaScript</li>
+  <li>Database: MySQL</li>
+  <li>AI Engine: Gemini</li>
+  <li>Server / Deployment: Railway</li>
+  <li>Project Status: MVP</li>
+</ul>
