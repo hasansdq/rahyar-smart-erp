@@ -27,15 +27,23 @@ const LoginScreen = ({ onLogin }: LoginScreenProps) => {
     setError('');
     setLoading(true);
 
+    // Safety timeout in case server hangs completely (visual only)
+    const safetyTimeout = setTimeout(() => {
+        if(loading) {
+            setLoading(false);
+            setError('زمان پاسخگویی سرور به پایان رسید. لطفا اتصال اینترنت یا وضعیت سرور را بررسی کنید.');
+        }
+    }, 20000);
+
     try {
         if (isLogin) {
           if (!username || !password) throw new Error('لطفا نام کاربری و رمز عبور را وارد کنید.');
           
-          const user = await db.login(username, password);
-          if (user) {
-            onLogin(user);
+          const result = await db.login(username, password);
+          if (result.user) {
+            onLogin(result.user);
           } else {
-            setError('نام کاربری یا رمز عبور اشتباه است.');
+            setError(result.error || 'نام کاربری یا رمز عبور اشتباه است.');
           }
         } else {
           if (!username || !password || !confirmPassword) throw new Error('لطفا تمام فیلدها را پر کنید.');
@@ -54,17 +62,18 @@ const LoginScreen = ({ onLogin }: LoginScreenProps) => {
             joinedDate: new Date().toLocaleDateString('fa-IR')
           };
 
-          const success = await db.registerUser(newUser);
-          if (success) {
-             const user = await db.login(username, password);
-             if(user) onLogin(user);
+          const result = await db.registerUser(newUser);
+          if (result.success) {
+             const loginRes = await db.login(username, password);
+             if(loginRes.user) onLogin(loginRes.user);
           } else {
-            setError('خطا در ثبت نام.');
+            setError(result.error || 'خطا در ثبت نام.');
           }
         }
     } catch (err: any) {
-        setError(err.message || 'خطای سرور');
+        setError(err.message || 'خطای غیرمنتظره در سرور');
     } finally {
+        clearTimeout(safetyTimeout);
         setLoading(false);
     }
   };

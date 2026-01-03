@@ -39,24 +39,26 @@ class DBService {
   }
 
   // Auth Methods
-  async login(username: string, password: string): Promise<User | null> {
+  async login(username: string, password: string): Promise<{user?: User, error?: string}> {
     try {
         const res = await api.post('/auth/login', { username, password });
         localStorage.setItem('auth_token', res.data.token);
         this.init(); // fetch data after login
-        return res.data.user;
-    } catch (e) {
-        return null;
+        return { user: res.data.user };
+    } catch (e: any) {
+        const msg = e.response?.data?.message || e.message || 'خطا در ورود';
+        return { error: msg };
     }
   }
 
-  async registerUser(user: User): Promise<boolean> {
+  async registerUser(user: User): Promise<{success: boolean, error?: string}> {
     try {
         const res = await api.post('/auth/register', user);
         localStorage.setItem('auth_token', res.data.token);
-        return true;
-    } catch {
-        return false;
+        return { success: true };
+    } catch (e: any) {
+        const msg = e.response?.data?.error || e.message || 'خطا در ثبت نام';
+        return { success: false, error: msg };
     }
   }
 

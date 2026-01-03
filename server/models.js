@@ -1,12 +1,18 @@
 import { Sequelize, DataTypes } from 'sequelize';
 
 // Database Connection
-const sequelize = new Sequelize('safakaco_rahyar', 'safakaco_rahyar', 'Hasan78484@', {
-  host: '195.201.186.148',
+// Using the provided Railway internal URL
+const sequelize = new Sequelize('mysql://root:TTSSOgqnxNqkdbCHsJPPkSrwsHQOvIjg@mysql.railway.internal:3306/railway', {
   dialect: 'mysql',
-  logging: false,
+  logging: false, // Disable logging to keep console clean, set to console.log for debugging
+  pool: {
+    max: 10,
+    min: 0,
+    acquire: 30000,
+    idle: 10000
+  },
   dialectOptions: {
-    connectTimeout: 60000
+    connectTimeout: 60000 // 60 seconds timeout for stable connection
   }
 });
 
@@ -108,12 +114,18 @@ const Settings = sequelize.define('Settings', {
 
 const initDB = async () => {
   try {
+    console.log('Attempting to connect to database...');
     await sequelize.authenticate();
-    console.log('Database connected...');
-    await sequelize.sync({ alter: true }); // Automatically creates/updates tables
-    console.log('Models synced...');
+    console.log('Database connection established successfully.');
+    
+    // alter: true checks what is the current state of the table in the database 
+    // (which columns it has, what are their data types, etc), 
+    // and then performs the necessary changes in the table to make it match the model.
+    await sequelize.sync({ alter: true }); 
+    console.log('All models were synchronized successfully.');
   } catch (err) {
-    console.error('Error connecting to database:', err);
+    console.error('Unable to connect to the database:', err);
+    // Important: We don't exit process here so the server can still serve static files/health checks
   }
 };
 
