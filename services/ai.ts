@@ -9,7 +9,7 @@ import { io, Socket } from "socket.io-client";
 export const suggestProjectDetails = async (topic: string): Promise<any> => {
   try {
     const response = await api.post('/ai/generate', {
-      prompt: `Create a business project details for topic: "${topic}". Return JSON with: title, description, risks (array), budget (number), tags (array).`,
+      prompt: `Create a business project details for topic: "${topic}". Return JSON with: title, description, risks (array), budget (number), tags (array). Content MUST be in Persian (Farsi).`,
       mimeType: 'application/json'
     });
     return JSON.parse(response.data.text || "{}");
@@ -22,7 +22,7 @@ export const suggestProjectDetails = async (topic: string): Promise<any> => {
 export const generateTeamMember = async (description: string): Promise<any> => {
   try {
     const response = await api.post('/ai/generate', {
-      prompt: `Create a user profile based on: "${description}". Return JSON: name, role, email, skills, department.`,
+      prompt: `Create a user profile based on: "${description}". Return JSON: name, role, email, skills, department. Content MUST be in Persian (Farsi).`,
       mimeType: 'application/json'
     });
     return JSON.parse(response.data.text || "{}");
@@ -36,35 +36,37 @@ export const generateBusinessPlan = async (): Promise<string> => {
     const prompt = `
       Based on the provided SYSTEM DATA (Users, Projects, Finance, Reports), generate a comprehensive, strategic Business Plan in JSON format.
       
+      **CRITICAL INSTRUCTION: All text values, descriptions, summaries, and analysis MUST be written in PERSIAN (FARSI). Do not use English for the content. Keep the JSON keys in English.**
+      
       The analysis must be deep, identifying specific organizational discrepancies (e.g., high budget but low progress, understaffed departments).
       
       Return STRICT JSON with this structure:
       {
-        "executiveSummary": "High-level summary...",
-        "marketAnalysis": "Detailed market analysis...",
+        "executiveSummary": "خلاصه مدیریتی جامع به زبان فارسی...",
+        "marketAnalysis": "تحلیل دقیق بازار به زبان فارسی...",
         "marketingStrategy": {
-            "overview": "General marketing approach...",
+            "overview": "استراتژی کلی بازاریابی به فارسی...",
             "campaigns": [
-                { "name": "Campaign Name", "channel": "Platform", "budget": 1000, "expectedRoi": "20%", "strategy": "Tactics..." }
+                { "name": "نام کمپین", "channel": "کانال (مثلا اینستاگرام)", "budget": 1000, "expectedRoi": "20%", "strategy": "تستراتژی به فارسی..." }
             ]
         },
-        "operationalPlan": "Operational details...",
+        "operationalPlan": "برنامه عملیاتی به فارسی...",
         "financialProjections": {
             "projections": [
-                { "year": "Current Year", "revenue": 100, "profit": 20 },
-                { "year": "Next Year", "revenue": 150, "profit": 40 }
+                { "year": "1403", "revenue": 100, "profit": 20 },
+                { "year": "1404", "revenue": 150, "profit": 40 }
             ],
-            "summary": "Financial outlook text..."
+            "summary": "خلاصه وضعیت مالی به فارسی..."
         },
         "riskManagement": [
-            { "title": "Risk Name", "probability": "High/Medium/Low", "impact": "High/Medium/Low", "mitigation": "Action plan..." }
+            { "title": "عنوان ریسک", "probability": "High/Medium/Low", "impact": "High/Medium/Low", "mitigation": "راهکار مقابله به فارسی..." }
         ],
         "aiInsights": {
             "successProbability": 75, // Integer 0-100 based on overall health
-            "trends": ["Trend 1", "Trend 2"],
-            "discrepancies": ["Discrepancy 1 (e.g. Finance vs Output)", "Discrepancy 2"],
-            "suggestions": ["Suggestion 1", "Suggestion 2"],
-            "warnings": ["Warning 1", "Warning 2"]
+            "trends": ["روند ۱", "روند ۲"],
+            "discrepancies": ["ناهمخوانی ۱ (مثلا بودجه زیاد ولی پیشرفت کم)", "ناهمخوانی ۲"],
+            "suggestions": ["پیشنهاد ۱", "پیشنهاد ۲"],
+            "warnings": ["هشدار ۱", "هشدار ۲"]
         },
         "generatedDate": "YYYY-MM-DD"
       }
@@ -84,7 +86,7 @@ export const generateBusinessPlan = async (): Promise<string> => {
 export const consultFinance = async (query: string): Promise<string> => {
   try {
     const response = await api.post('/ai/chat', {
-      message: `You are a financial analyst. Query: ${query}`
+      message: `You are a financial analyst. Answer in Persian (Farsi). Query: ${query}`
     });
     return response.data.text || "No response";
   } catch (error) {
@@ -108,7 +110,7 @@ export const chatWithManager = async (message: string, isVoice: boolean, attachm
 export const getSmartAlerts = async (): Promise<{warning: string, suggestion: string} | null> => {
   try {
     const response = await api.post('/ai/generate', {
-        prompt: "Give me one important warning and one short suggestion for this company based on data. JSON: {warning, suggestion}",
+        prompt: "Give me one important warning and one short suggestion for this company based on data. Response must be in Persian (Farsi). JSON: {warning, suggestion}",
         mimeType: 'application/json'
     });
     return JSON.parse(response.data.text || "null");
