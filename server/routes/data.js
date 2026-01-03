@@ -60,7 +60,7 @@ router.get('/data', authenticateToken, async (req, res) => {
         settings = await Settings.create({
             aiModel: 'gemini-3-flash-preview',
             systemPrompt: 'شما یک دستیار هوشمند سازمانی هستید.',
-            themeMode: 'system'
+            themeMode: 'dark'
         });
     }
 

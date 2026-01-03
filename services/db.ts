@@ -14,7 +14,7 @@ const initialData: SystemData = {
   settings: {
     aiModel: 'gemini-3-flash-preview',
     systemPrompt: 'System',
-    themeMode: 'system'
+    themeMode: 'dark'
   }
 };
 

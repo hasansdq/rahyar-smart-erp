@@ -25,7 +25,7 @@ interface AppState {
 const App = () => {
   const [user, setUser] = useState<User | null>(null);
   const [page, setPage] = useState<AppState['page']>('dashboard');
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   
   // Loading States
   const [isAuthChecking, setIsAuthChecking] = useState(true); 
@@ -36,10 +36,8 @@ const App = () => {
   const [deniedMessage, setDeniedMessage] = useState('');
 
   useEffect(() => {
-     // Apply dark mode immediately based on system pref to avoid flash
-     if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-         document.documentElement.classList.add('dark');
-     }
+     // Ensure dark class is present initially (backup for index.html)
+     document.documentElement.classList.add('dark');
 
      const initApp = async () => {
          try {
@@ -55,7 +53,8 @@ const App = () => {
                     const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
                     setTheme(isDark ? 'dark' : 'light');
                  } else {
-                    setTheme(settings.themeMode || 'light');
+                    // Fallback to dark if undefined
+                    setTheme((settings.themeMode as 'light'|'dark') || 'dark');
                  }
              }
          } catch (err) {
