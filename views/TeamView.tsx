@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, UserRole } from '../types';
 import { db } from '../services/db';
 import { generateTeamMember } from '../services/ai';
@@ -20,13 +20,15 @@ const TeamView = ({ user }: { user: User }) => {
   const [aiPrompt, setAiPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
 
+  useEffect(() => {
+     return db.subscribe(() => setUsers([...db.getUsers()]));
+  }, []);
+
   // Computed
   const departments = ['All', ...Array.from(new Set(users.map(u => u.department).filter(Boolean)))];
   const filteredUsers = activeTab === 'All' ? users : users.filter(u => u.department === activeTab);
   
   const canEdit = user.role === UserRole.MANAGER || user.role === UserRole.ADMIN;
-
-  const refreshData = () => setUsers(db.getUsers());
 
   const handleSave = () => {
     if(!formData.name || !formData.email) return;
@@ -42,7 +44,6 @@ const TeamView = ({ user }: { user: User }) => {
     }
     setShowAddModal(false);
     setFormData({});
-    refreshData();
   };
 
   const handleEdit = (u: User) => {
@@ -53,7 +54,6 @@ const TeamView = ({ user }: { user: User }) => {
   const handleDelete = (id: string) => {
     if(confirm('آیا مطمئن هستید؟ حذف کاربر غیرقابل بازگشت است.')) {
       db.deleteUser(id);
-      refreshData();
     }
   };
 

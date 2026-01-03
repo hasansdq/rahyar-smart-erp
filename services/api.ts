@@ -5,19 +5,11 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json'
   },
+  withCredentials: true, // Crucial for sending cookies
   timeout: 15000 // 15 seconds timeout
 });
 
-// Attach token to every request
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('auth_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-// Add response interceptor to handle timeouts explicitly
+// Response interceptor to handle timeouts and auth errors
 api.interceptors.response.use(
   response => response,
   error => {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Transaction } from '../types';
 import { db } from '../services/db';
 import { consultFinance } from '../services/ai';
@@ -17,7 +17,9 @@ const FinanceView = ({ user }: { user: User }) => {
   const [showModal, setShowModal] = useState(false);
   const [editingTx, setEditingTx] = useState<Partial<Transaction>>({});
 
-  const refreshData = () => setTransactions(db.getFinance());
+  useEffect(() => {
+     return db.subscribe(() => setTransactions([...db.getFinance()]));
+  }, []);
 
   const handleSaveTx = () => {
      if(!editingTx.amount || !editingTx.category || !editingTx.date) return alert('لطفا اطلاعات را کامل کنید');
@@ -39,13 +41,11 @@ const FinanceView = ({ user }: { user: User }) => {
      
      setShowModal(false);
      setEditingTx({});
-     refreshData();
   };
 
   const handleDeleteTx = (id: string) => {
      if(confirm('آیا مطمئن هستید؟')) {
         db.deleteTransaction(id);
-        refreshData();
      }
   };
 

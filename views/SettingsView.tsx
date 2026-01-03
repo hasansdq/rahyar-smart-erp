@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, KnowledgeFile } from '../types';
 import { db } from '../services/db';
 import { Card, Modal } from '../components/UI';
@@ -15,6 +15,13 @@ const SettingsView = ({ user, setDarkMode }: { user: User, setDarkMode: (v: bool
    const [editingFile, setEditingFile] = useState<KnowledgeFile | null>(null);
    const [fileName, setFileName] = useState('');
 
+   useEffect(() => {
+     return db.subscribe(() => {
+         setSettings({...db.getSettings()});
+         setKnowledgeFiles([...db.getKnowledgeBase()]);
+     });
+   }, []);
+
    const save = () => {
       db.updateSettings(settings);
       setDarkMode(settings.themeMode === 'dark');
@@ -27,7 +34,6 @@ const SettingsView = ({ user, setDarkMode }: { user: User, setDarkMode: (v: bool
          setUploading(true);
          try {
              await db.uploadKnowledgeFile(file);
-             setKnowledgeFiles(db.getKnowledgeBase());
          } catch (err) {
              alert('خطا در آپلود فایل');
          } finally {
@@ -39,7 +45,6 @@ const SettingsView = ({ user, setDarkMode }: { user: User, setDarkMode: (v: bool
    const handleDeleteFile = async (id: string) => {
       if(confirm('حذف فایل؟')) {
          await db.deleteKnowledgeFile(id);
-         setKnowledgeFiles(db.getKnowledgeBase());
       }
    };
 
@@ -52,7 +57,6 @@ const SettingsView = ({ user, setDarkMode }: { user: User, setDarkMode: (v: bool
    const handleSaveFile = () => {
       if(editingFile && fileName) {
          db.updateKnowledgeFile({...editingFile, name: fileName});
-         setKnowledgeFiles(db.getKnowledgeBase());
          setShowFileModal(false);
          setEditingFile(null);
       }

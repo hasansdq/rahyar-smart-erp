@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Project, ProjectStatus } from '../types';
 import { db } from '../services/db';
 import { suggestProjectDetails } from '../services/ai';
@@ -13,7 +13,13 @@ const ProjectsView = ({ user }: { user: User }) => {
   const [aiTopic, setAiTopic] = useState('');
   const [loadingAi, setLoadingAi] = useState(false);
 
-  const refresh = () => setProjects(db.getProjects());
+  // Subscribe to real-time updates
+  useEffect(() => {
+     const unsubscribe = db.subscribe(() => {
+         setProjects([...db.getProjects()]);
+     });
+     return unsubscribe;
+  }, []);
 
   const handleSave = () => {
     if (!editingProject.title) return;
@@ -40,7 +46,6 @@ const ProjectsView = ({ user }: { user: User }) => {
     
     setShowModal(false);
     setEditingProject({});
-    refresh();
   };
 
   const handleAiSuggest = async () => {
@@ -63,7 +68,6 @@ const ProjectsView = ({ user }: { user: User }) => {
   const handleDelete = (id: string) => {
     if (confirm('حذف پروژه؟')) {
        db.deleteProject(id);
-       refresh();
     }
   }
 

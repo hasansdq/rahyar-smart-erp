@@ -18,23 +18,39 @@ const initialData: SystemData = {
   }
 };
 
+type Listener = () => void;
+
 class DBService {
   private data: SystemData = initialData;
   private isInitialized = false;
+  private listeners: Listener[] = [];
 
   constructor() {}
 
+  // --- Real-time Subscription System ---
+  subscribe(listener: Listener) {
+      this.listeners.push(listener);
+      return () => {
+          this.listeners = this.listeners.filter(l => l !== listener);
+      };
+  }
+
+  private notify() {
+      this.listeners.forEach(l => l());
+  }
+
   async init() {
-    if (this.isInitialized) return;
+    // If we have data and initialized, we might still want to refresh to check cookie validity
     try {
-        const token = localStorage.getItem('auth_token');
-        if(!token) return;
-        
         const res = await api.get('/data');
         this.data = res.data;
         this.isInitialized = true;
+        this.notify();
+        return true;
     } catch (e) {
-        console.error("Failed to fetch initial data", e);
+        console.error("Failed to fetch initial data (Session might be expired)", e);
+        this.isInitialized = false;
+        return false;
     }
   }
 
@@ -42,8 +58,8 @@ class DBService {
   async login(username: string, password: string): Promise<{user?: User, error?: string}> {
     try {
         const res = await api.post('/auth/login', { username, password });
-        localStorage.setItem('auth_token', res.data.token);
-        this.init(); // fetch data after login
+        // Token is now in HttpOnly cookie handled by browser
+        await this.init(); // fetch data after login
         return { user: res.data.user };
     } catch (e: any) {
         const msg = e.response?.data?.message || e.message || 'خطا در ورود';
@@ -53,8 +69,9 @@ class DBService {
 
   async registerUser(user: User): Promise<{success: boolean, error?: string}> {
     try {
-        const res = await api.post('/auth/register', user);
-        localStorage.setItem('auth_token', res.data.token);
+        await api.post('/auth/register', user);
+        // Token is now in HttpOnly cookie
+        await this.init(); 
         return { success: true };
     } catch (e: any) {
         const msg = e.response?.data?.error || e.message || 'خطا در ثبت نام';
@@ -62,10 +79,15 @@ class DBService {
     }
   }
 
-  logout() {
-      localStorage.removeItem('auth_token');
+  async logout() {
+      try {
+        await api.post('/auth/logout');
+      } catch (e) {
+          console.error("Logout error", e);
+      }
       this.isInitialized = false;
       this.data = initialData;
+      this.notify();
   }
 
   // Getters
@@ -81,59 +103,84 @@ class DBService {
   getKnowledgeBase(): KnowledgeFile[] { return this.data.knowledgeBase; }
   getSettings(): AppSettings { return this.data.settings; }
 
-  // Actions
+  // Actions (Optimistic UI + Server Sync)
+  // We update local state AND notify listeners immediately, while also sending to server
+  
   async addUser(user: User) { 
       await api.post('/users', user); 
       this.data.users.push(user); 
+      this.notify();
   }
   async updateUser(user: User) {
       await api.put(`/users/${user.id}`, user);
       this.data.users = this.data.users.map(u => u.id === user.id ? user : u);
+      this.notify();
   }
   async deleteUser(userId: string) {
       await api.delete(`/users/${userId}`);
       this.data.users = this.data.users.filter(u => u.id !== userId);
+      this.notify();
   }
   
   async addProject(project: Project) {
       await api.post('/projects', project);
       this.data.projects.push(project);
+      this.notify();
   }
   async updateProject(project: Project) { 
       await api.put(`/projects/${project.id}`, project);
       this.data.projects = this.data.projects.map(p => p.id === project.id ? project : p);
+      this.notify();
   }
   async deleteProject(projectId: string) {
       await api.delete(`/projects/${projectId}`);
       this.data.projects = this.data.projects.filter(p => p.id !== projectId);
+      this.notify();
   }
 
   async addTask(task: Task) { 
       await api.post('/tasks', task);
       this.data.tasks.push(task);
+      this.notify();
   }
   async updateTask(task: Task) {
       await api.put(`/tasks/${task.id}`, task);
       this.data.tasks = this.data.tasks.map(t => t.id === task.id ? task : t);
+      this.notify();
   }
 
   async addTransaction(tx: Transaction) { 
       await api.post('/transactions', tx);
       this.data.finance.push(tx);
+      this.notify();
   }
   async updateTransaction(tx: Transaction) {
       await api.put(`/transactions/${tx.id}`, tx);
       this.data.finance = this.data.finance.map(t => t.id === tx.id ? tx : t);
+      this.notify();
   }
   async deleteTransaction(id: string) {
       await api.delete(`/transactions/${id}`);
       this.data.finance = this.data.finance.filter(t => t.id !== id);
+      this.notify();
   }
 
-  async addContract(contract: Contract) { this.data.contracts.push(contract); }
-  async addReport(report: Report) { this.data.reports.push(report); }
-  async setBusinessPlan(plan: string) { this.data.businessPlan = plan; }
-  async addChatLog(log: ChatLog) { this.data.chatLogs.push(log); }
+  async addContract(contract: Contract) { 
+      this.data.contracts.push(contract); 
+      this.notify();
+  }
+  async addReport(report: Report) { 
+      this.data.reports.push(report); 
+      this.notify();
+  }
+  async setBusinessPlan(plan: string) { 
+      this.data.businessPlan = plan; 
+      this.notify();
+  }
+  async addChatLog(log: ChatLog) { 
+      this.data.chatLogs.push(log); 
+      this.notify();
+  }
 
   async uploadKnowledgeFile(file: File) { 
      const formData = new FormData();
@@ -144,6 +191,7 @@ class DBService {
              headers: { 'Content-Type': 'multipart/form-data' }
          });
          this.data.knowledgeBase.push(res.data);
+         this.notify();
          return res.data;
      } catch (e) {
          console.error("Upload failed", e);
@@ -152,14 +200,15 @@ class DBService {
   }
 
   async updateKnowledgeFile(file: KnowledgeFile) {
-     // Currently we don't update file content, just metadata if needed
      this.data.knowledgeBase = this.data.knowledgeBase.map(f => f.id === file.id ? file : f);
+     this.notify();
   }
 
   async deleteKnowledgeFile(fileId: string) {
     try {
         await api.delete(`/files/${fileId}`);
         this.data.knowledgeBase = this.data.knowledgeBase.filter(f => f.id !== fileId);
+        this.notify();
     } catch (e) {
         console.error("Delete failed", e);
     }
@@ -172,6 +221,7 @@ class DBService {
           await api.post('/settings', settings);
       }
       this.data.settings = settings;
+      this.notify();
   }
 }
 
