@@ -34,41 +34,50 @@ export const generateTeamMember = async (description: string): Promise<any> => {
 export const generateBusinessPlan = async (): Promise<string> => {
   try {
     const prompt = `
-      Based on the provided SYSTEM DATA (Users, Projects, Finance, Reports), generate a comprehensive, strategic Business Plan in JSON format.
-      
-      **CRITICAL INSTRUCTION: All text values, descriptions, summaries, and analysis MUST be written in PERSIAN (FARSI). Do not use English for the content. Keep the JSON keys in English.**
-      
-      The analysis must be deep, identifying specific organizational discrepancies (e.g., high budget but low progress, understaffed departments).
-      
-      Return STRICT JSON with this structure:
+      You are a professional business strategist and analyst for an Iranian organization.
+      Using the provided SYSTEM DATA (Users, Projects, Finance, Reports), analyze the organization's status and generate a comprehensive Business Plan.
+
+      **STRICT LANGUAGE REQUIREMENTS:**
+      1. ALL content (values, descriptions, summaries, analysis) MUST be written in **PERSIAN (FARSI)**.
+      2. DO NOT generate English text for the content (except for technical terms if absolutely necessary).
+      3. The JSON Keys MUST remain in **ENGLISH** (e.g., "executiveSummary", "marketAnalysis") to match the system schema.
+      4. For "riskManagement", the values for "probability" and "impact" MUST be exactly one of: "High", "Medium", or "Low" (Keep these values in English for system compatibility). The "title" and "mitigation" must be in Persian.
+
+      **ANALYSIS INSTRUCTIONS:**
+      - Identify real discrepancies in the provided data (e.g., high budget projects with low progress).
+      - Predict financial growth based on the transaction history.
+      - Suggest marketing campaigns relevant to the organization's field.
+      - Calculate "successProbability" (0-100) based on financial health and project progress.
+
+      **REQUIRED JSON STRUCTURE (Output this exact JSON structure):**
       {
-        "executiveSummary": "خلاصه مدیریتی جامع به زبان فارسی...",
-        "marketAnalysis": "تحلیل دقیق بازار به زبان فارسی...",
+        "executiveSummary": "خلاصه مدیریتی کامل و حرفه‌ای از وضعیت فعلی و آینده سازمان به زبان فارسی...",
+        "marketAnalysis": "تحلیل بازار و رقبا به زبان فارسی...",
         "marketingStrategy": {
-            "overview": "استراتژی کلی بازاریابی به فارسی...",
+            "overview": "استراتژی کلی بازاریابی و تبلیغات به فارسی...",
             "campaigns": [
-                { "name": "نام کمپین", "channel": "کانال (مثلا اینستاگرام)", "budget": 1000, "expectedRoi": "20%", "strategy": "تستراتژی به فارسی..." }
+                { "name": "نام کمپین", "channel": "کانال (مثلا اینستاگرام)", "budget": 1000, "expectedRoi": "20%", "strategy": "توضیحات استراتژی به فارسی..." }
             ]
         },
-        "operationalPlan": "برنامه عملیاتی به فارسی...",
+        "operationalPlan": "برنامه عملیاتی و اجرایی دقیق به فارسی...",
         "financialProjections": {
             "projections": [
-                { "year": "1403", "revenue": 100, "profit": 20 },
-                { "year": "1404", "revenue": 150, "profit": 40 }
+                { "year": "1403", "revenue": 1000, "profit": 200 },
+                { "year": "1404", "revenue": 1500, "profit": 400 }
             ],
-            "summary": "خلاصه وضعیت مالی به فارسی..."
+            "summary": "تحلیل وضعیت مالی و پیش‌بینی آینده به زبان فارسی..."
         },
         "riskManagement": [
-            { "title": "عنوان ریسک", "probability": "High/Medium/Low", "impact": "High/Medium/Low", "mitigation": "راهکار مقابله به فارسی..." }
+            { "title": "عنوان ریسک به فارسی", "probability": "High", "impact": "Medium", "mitigation": "راهکار کاهش ریسک به زبان فارسی..." }
         ],
         "aiInsights": {
-            "successProbability": 75, // Integer 0-100 based on overall health
-            "trends": ["روند ۱", "روند ۲"],
-            "discrepancies": ["ناهمخوانی ۱ (مثلا بودجه زیاد ولی پیشرفت کم)", "ناهمخوانی ۲"],
-            "suggestions": ["پیشنهاد ۱", "پیشنهاد ۲"],
-            "warnings": ["هشدار ۱", "هشدار ۲"]
+            "successProbability": 75,
+            "trends": ["روند بازار ۱ به فارسی", "روند ۲ به فارسی"],
+            "discrepancies": ["ناهمخوانی شناسایی شده ۱ به فارسی", "ناهمخوانی ۲"],
+            "suggestions": ["پیشنهاد استراتژیک ۱ به فارسی", "پیشنهاد ۲"],
+            "warnings": ["هشدار جدی ۱ به فارسی"]
         },
-        "generatedDate": "YYYY-MM-DD"
+        "generatedDate": "${new Date().toLocaleDateString('fa-IR')}"
       }
     `;
 
@@ -96,8 +105,6 @@ export const consultFinance = async (query: string): Promise<string> => {
 
 export const chatWithManager = async (message: string, isVoice: boolean, attachment?: File): Promise<string> => {
   try {
-    // Note: Attachment handling requires multipart/form-data logic on server, 
-    // simplified here to text for the modular transition.
     const response = await api.post('/ai/chat', {
       message: message
     });
