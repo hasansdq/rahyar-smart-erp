@@ -8,6 +8,7 @@ const SettingsView = ({ user, setDarkMode }: { user: User, setDarkMode: (v: bool
    const [settings, setSettings] = useState(db.getSettings());
    const [activeTab, setActiveTab] = useState<'general' | 'knowledge'>('general');
    const [knowledgeFiles, setKnowledgeFiles] = useState(db.getKnowledgeBase());
+   const [uploading, setUploading] = useState(false);
    
    // File Edit State
    const [showFileModal, setShowFileModal] = useState(false);
@@ -20,24 +21,24 @@ const SettingsView = ({ user, setDarkMode }: { user: User, setDarkMode: (v: bool
       alert('تنظیمات ذخیره شد');
    };
 
-   // Simulated Upload
-   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files && e.target.files[0]) {
          const file = e.target.files[0];
-         const newFile: KnowledgeFile = {
-            id: Math.random().toString(36).substr(2, 9),
-            name: file.name,
-            size: (file.size / 1024 / 1024).toFixed(1) + ' MB',
-            uploadDate: new Date().toLocaleDateString('fa-IR')
-         };
-         db.addKnowledgeFile(newFile);
-         setKnowledgeFiles(db.getKnowledgeBase());
+         setUploading(true);
+         try {
+             await db.uploadKnowledgeFile(file);
+             setKnowledgeFiles(db.getKnowledgeBase());
+         } catch (err) {
+             alert('خطا در آپلود فایل');
+         } finally {
+             setUploading(false);
+         }
       }
    };
 
-   const handleDeleteFile = (id: string) => {
+   const handleDeleteFile = async (id: string) => {
       if(confirm('حذف فایل؟')) {
-         db.deleteKnowledgeFile(id);
+         await db.deleteKnowledgeFile(id);
          setKnowledgeFiles(db.getKnowledgeBase());
       }
    };
@@ -78,6 +79,7 @@ const SettingsView = ({ user, setDarkMode }: { user: User, setDarkMode: (v: bool
                      <select className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" value={settings.aiModel} onChange={e => setSettings({...settings, aiModel: e.target.value})}>
                         <option value="gemini-3-flash-preview">Gemini 3.0 Flash</option>
                         <option value="gemini-3-pro-preview">Gemini 3.0 Pro</option>
+                        <option value="gemini-2.5-flash-latest">Gemini 2.5 Flash</option>
                      </select>
                   </div>
                   <div>
@@ -112,13 +114,13 @@ const SettingsView = ({ user, setDarkMode }: { user: User, setDarkMode: (v: bool
          ) : (
             <div className="space-y-6">
                <Card>
-                  <div className="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors relative">
-                     <input type="file" accept=".pdf,.doc,.docx,.txt" onChange={handleFileUpload} className="absolute inset-0 opacity-0 cursor-pointer"/>
+                  <div className={`border-2 border-dashed ${uploading ? 'border-blue-500 bg-blue-50' : 'border-slate-300 dark:border-slate-600'} rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors relative`}>
+                     <input type="file" disabled={uploading} accept=".pdf,.doc,.docx,.txt" onChange={handleFileUpload} className="absolute inset-0 opacity-0 cursor-pointer"/>
                      <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mb-4 text-blue-600 dark:text-blue-400">
-                        <UploadCloud size={32}/>
+                        {uploading ? <div className="animate-spin w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full"></div> : <UploadCloud size={32}/>}
                      </div>
-                     <h4 className="font-bold dark:text-white mb-1">بارگذاری فایل جدید</h4>
-                     <p className="text-sm text-slate-500">فایل‌های PDF، Word یا Text را اینجا رها کنید</p>
+                     <h4 className="font-bold dark:text-white mb-1">{uploading ? 'در حال پردازش...' : 'بارگذاری فایل جدید'}</h4>
+                     <p className="text-sm text-slate-500">فایل‌های PDF یا Text را اینجا رها کنید (متن استخراج و در RAG ذخیره می‌شود)</p>
                   </div>
                </Card>
 

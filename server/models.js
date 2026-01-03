@@ -1,10 +1,9 @@
 import { Sequelize, DataTypes } from 'sequelize';
 
 // Database Connection
-// Using the provided Railway public URL
 const sequelize = new Sequelize('mysql://root:TTSSOgqnxNqkdbCHsJPPkSrwsHQOvIjg@turntable.proxy.rlwy.net:53395/railway', {
   dialect: 'mysql',
-  logging: false, // Disable logging to keep console clean, set to console.log for debugging
+  logging: false,
   pool: {
     max: 10,
     min: 0,
@@ -12,7 +11,7 @@ const sequelize = new Sequelize('mysql://root:TTSSOgqnxNqkdbCHsJPPkSrwsHQOvIjg@t
     idle: 10000
   },
   dialectOptions: {
-    connectTimeout: 60000 // 60 seconds timeout for stable connection
+    connectTimeout: 60000
   }
 });
 
@@ -102,7 +101,8 @@ const KnowledgeFile = sequelize.define('KnowledgeFile', {
   id: { type: DataTypes.STRING, primaryKey: true },
   name: { type: DataTypes.STRING },
   size: { type: DataTypes.STRING },
-  uploadDate: { type: DataTypes.STRING }
+  uploadDate: { type: DataTypes.STRING },
+  content: { type: DataTypes.TEXT('long') } // Added content field for RAG
 });
 
 const Settings = sequelize.define('Settings', {
@@ -117,15 +117,10 @@ const initDB = async () => {
     console.log('Attempting to connect to database...');
     await sequelize.authenticate();
     console.log('Database connection established successfully.');
-    
-    // alter: true checks what is the current state of the table in the database 
-    // (which columns it has, what are their data types, etc), 
-    // and then performs the necessary changes in the table to make it match the model.
     await sequelize.sync({ alter: true }); 
     console.log('All models were synchronized successfully.');
   } catch (err) {
     console.error('Unable to connect to the database:', err);
-    // Important: We don't exit process here so the server can still serve static files/health checks
   }
 };
 

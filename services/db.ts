@@ -68,7 +68,7 @@ class DBService {
       this.data = initialData;
   }
 
-  // Getters (Sync getters relying on cached data from init())
+  // Getters
   getData(): SystemData { return this.data; }
   getUsers(): User[] { return this.data.users; }
   getProjects(): Project[] { return this.data.projects; }
@@ -81,7 +81,7 @@ class DBService {
   getKnowledgeBase(): KnowledgeFile[] { return this.data.knowledgeBase; }
   getSettings(): AppSettings { return this.data.settings; }
 
-  // Actions (Async updates to server)
+  // Actions
   async addUser(user: User) { 
       await api.post('/users', user); 
       this.data.users.push(user); 
@@ -130,20 +130,39 @@ class DBService {
       this.data.finance = this.data.finance.filter(t => t.id !== id);
   }
 
-  async addContract(contract: Contract) { this.data.contracts.push(contract); } // Implement API if needed
+  async addContract(contract: Contract) { this.data.contracts.push(contract); }
   async addReport(report: Report) { this.data.reports.push(report); }
   async setBusinessPlan(plan: string) { this.data.businessPlan = plan; }
   async addChatLog(log: ChatLog) { this.data.chatLogs.push(log); }
 
-  async addKnowledgeFile(file: KnowledgeFile) { 
-     this.data.knowledgeBase.push(file); 
-     // In real app, upload file via API
+  async uploadKnowledgeFile(file: File) { 
+     const formData = new FormData();
+     formData.append('file', file);
+     
+     try {
+         const res = await api.post('/files/upload', formData, {
+             headers: { 'Content-Type': 'multipart/form-data' }
+         });
+         this.data.knowledgeBase.push(res.data);
+         return res.data;
+     } catch (e) {
+         console.error("Upload failed", e);
+         throw e;
+     }
   }
+
   async updateKnowledgeFile(file: KnowledgeFile) {
+     // Currently we don't update file content, just metadata if needed
      this.data.knowledgeBase = this.data.knowledgeBase.map(f => f.id === file.id ? file : f);
   }
+
   async deleteKnowledgeFile(fileId: string) {
-    this.data.knowledgeBase = this.data.knowledgeBase.filter(f => f.id !== fileId);
+    try {
+        await api.delete(`/files/${fileId}`);
+        this.data.knowledgeBase = this.data.knowledgeBase.filter(f => f.id !== fileId);
+    } catch (e) {
+        console.error("Delete failed", e);
+    }
   }
 
   async updateSettings(settings: AppSettings) {
