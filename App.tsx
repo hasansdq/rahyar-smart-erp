@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User } from './types';
 import { db } from './services/db';
-import { SidebarItem, RahyarLogo, SplashScreen, AccessDeniedModal } from './components/UI';
+import { SidebarItem, RahyarLogo, SplashScreen, AccessDeniedModal, ModernLoader } from './components/UI';
 import { canAccess, getAccessMessage, PageId } from './utils/permissions';
 import { 
   LayoutDashboard, Users, Briefcase, FileText, Settings, 
@@ -19,9 +19,7 @@ import BusinessPlanView from './views/BusinessPlanView';
 import SettingsView from './views/SettingsView';
 
 interface AppState {
-  user: User | null;
   page: PageId;
-  theme: 'light' | 'dark';
 }
 
 const App = () => {
@@ -29,40 +27,47 @@ const App = () => {
   const [page, setPage] = useState<AppState['page']>('dashboard');
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   
-  // Auth & Loading States
-  const [isAuthChecking, setIsAuthChecking] = useState(true); // Loading initial session
-  const [showSplash, setShowSplash] = useState(true);
-  const [dataLoaded, setDataLoaded] = useState(false);
+  // Loading States
+  const [isAuthChecking, setIsAuthChecking] = useState(true); 
+  const [splashAnimationDone, setSplashAnimationDone] = useState(false);
 
   // Access Control State
   const [showAccessDenied, setShowAccessDenied] = useState(false);
   const [deniedMessage, setDeniedMessage] = useState('');
 
-  // Initial Session Check
   useEffect(() => {
-     const checkSession = async () => {
-         // This attempts to fetch data using the cookie
-         const currentUser = await db.init();
-         
-         if (currentUser) {
-             setUser(currentUser);
-             setDataLoaded(true);
+     // Apply dark mode immediately based on system pref to avoid flash
+     if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+         document.documentElement.classList.add('dark');
+     }
+
+     const initApp = async () => {
+         try {
+             // Check if user has a valid session (cookie)
+             const currentUser = await db.init();
              
-             // Apply settings if available
-             const settings = db.getSettings();
-             if(settings.themeMode === 'system') {
-                const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                setTheme(isDark ? 'dark' : 'light');
-             } else {
-                setTheme(settings.themeMode || 'light');
+             if (currentUser) {
+                 setUser(currentUser);
+                 
+                 // Sync Settings
+                 const settings = db.getSettings();
+                 if(settings.themeMode === 'system') {
+                    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    setTheme(isDark ? 'dark' : 'light');
+                 } else {
+                    setTheme(settings.themeMode || 'light');
+                 }
              }
+         } catch (err) {
+             console.error("App init error:", err);
+         } finally {
+             // ALWAYS finish auth checking, whether 200 OK or 401 Unauthorized
+             setIsAuthChecking(false);
          }
-         
-         setIsAuthChecking(false);
      };
 
-     checkSession();
-  }, []); // Run once on mount
+     initApp();
+  }, []);
 
   useEffect(() => {
      if (theme === 'dark') document.documentElement.classList.add('dark');
@@ -79,17 +84,29 @@ const App = () => {
       }
   };
 
-  // Splash Screen Logic: Show splash at least until auth check is done + animation time
-  if (showSplash || isAuthChecking) {
-      return <SplashScreen onFinish={() => {
-        if (!isAuthChecking) setShowSplash(false);
-      }} />;
+  // 1. Show Splash Screen until its animation is done
+  if (!splashAnimationDone) {
+      return <SplashScreen onFinish={() => setSplashAnimationDone(true)} />;
   }
 
-  // If auth check is done and no user, show login
-  if (!user) return <LoginScreen onLogin={(u) => { setUser(u); setDataLoaded(true); }} />;
+  // 2. If Splash is done but Auth is still pending (slow network), show a clean loader instead of white screen
+  if (isAuthChecking) {
+      return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-50 dark:bg-slate-950">
+              <div className="flex flex-col items-center">
+                  <ModernLoader />
+                  <p className="mt-4 text-sm text-slate-400 font-medium">در حال برقراری ارتباط با سرور...</p>
+              </div>
+          </div>
+      );
+  }
 
-  // Main App (Protected)
+  // 3. If Auth Checked and No User -> Login Screen
+  if (!user) {
+      return <LoginScreen onLogin={(u) => setUser(u)} />;
+  }
+
+  // 4. Main App (Protected)
   return (
     <div className={`flex h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300 overflow-hidden font-sans`}>
         <AccessDeniedModal 
