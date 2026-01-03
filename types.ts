@@ -102,6 +102,7 @@ export interface KnowledgeFile {
 }
 
 export interface AppSettings {
+  id?: number;
   aiModel: string;
   systemPrompt: string;
   themeMode: 'light' | 'dark' | 'system';

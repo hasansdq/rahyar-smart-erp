@@ -28,16 +28,21 @@ const App = () => {
   const [page, setPage] = useState<AppState['page']>('dashboard');
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [showSplash, setShowSplash] = useState(true);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   useEffect(() => {
-     const settings = db.getSettings();
-     if(settings.themeMode === 'system') {
-        const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        setTheme(isDark ? 'dark' : 'light');
-     } else {
-        setTheme(settings.themeMode);
-     }
-  }, []);
+     // Try to load initial data if token exists
+     db.init().then(() => {
+         setDataLoaded(true);
+         const settings = db.getSettings();
+         if(settings.themeMode === 'system') {
+            const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            setTheme(isDark ? 'dark' : 'light');
+         } else {
+            setTheme(settings.themeMode || 'light');
+         }
+     });
+  }, [user]); // Reload if user changes (re-login)
 
   useEffect(() => {
      if (theme === 'dark') document.documentElement.classList.add('dark');
@@ -49,6 +54,9 @@ const App = () => {
   }
 
   if (!user) return <LoginScreen onLogin={setUser} />;
+
+  // Ensure data is loaded before showing dashboard to prevent empty charts
+  if (!dataLoaded) return <div className="flex h-screen items-center justify-center bg-slate-900 text-white">Loading data...</div>;
 
   return (
     <div className={`flex h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300 overflow-hidden font-sans`}>
@@ -85,7 +93,7 @@ const App = () => {
                          <div className="font-bold text-sm truncate dark:text-white">{user.name}</div>
                          <div className="text-xs text-slate-500 truncate">{user.role}</div>
                      </div>
-                     <button onClick={() => setUser(null)} className="p-2 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-red-500">
+                     <button onClick={() => { db.logout(); setUser(null); }} className="p-2 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-red-500">
                          <LogOut size={18} />
                      </button>
                  </div>
@@ -105,7 +113,7 @@ const App = () => {
                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
                      </div>
-                     <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400">Gemini 3.0 Connected</span>
+                     <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400">Server & AI Connected</span>
                   </div>
                </div>
             </header>

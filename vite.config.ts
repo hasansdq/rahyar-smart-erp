@@ -7,14 +7,23 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     define: {
-      // This ensures process.env.API_KEY works in the client-side code
-      // as required by the coding guidelines.
       'process.env.API_KEY': JSON.stringify(env.API_KEY),
-      // Polyfill for other potential process.env usage
       'process.env': {}
     },
     server: {
-      port: 3000
+      port: 3000,
+      proxy: {
+        '/api': {
+          target: 'http://localhost:3001',
+          changeOrigin: true,
+          secure: false,
+        },
+        '/socket.io': {
+          target: 'http://localhost:3001',
+          ws: true,
+          changeOrigin: true
+        }
+      }
     }
   };
 });

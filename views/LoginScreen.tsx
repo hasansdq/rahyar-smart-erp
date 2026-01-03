@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { User, UserRole } from '../types';
 import { db } from '../services/db';
-import { Card, RahyarLogo } from '../components/UI';
+import { RahyarLogo } from '../components/UI';
 import { User as UserIcon, Phone, Key, Eye, EyeOff, Lock, LogIn, UserPlus, AlertCircle, ArrowRight } from 'lucide-react';
 
 interface LoginScreenProps {
@@ -22,42 +22,27 @@ const LoginScreen = ({ onLogin }: LoginScreenProps) => {
   const [error, setError] = useState('');
   const [showPass, setShowPass] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    setTimeout(() => {
+    try {
         if (isLogin) {
-          // LOGIN LOGIC
-          if (!username || !password) {
-              setLoading(false);
-              return setError('لطفا نام کاربری و رمز عبور را وارد کنید.');
-          }
+          if (!username || !password) throw new Error('لطفا نام کاربری و رمز عبور را وارد کنید.');
           
-          const user = db.authenticate(username, password);
+          const user = await db.login(username, password);
           if (user) {
             onLogin(user);
           } else {
             setError('نام کاربری یا رمز عبور اشتباه است.');
           }
         } else {
-          // SIGNUP LOGIC
-          if (!username || !password || !phoneNumber || !confirmPassword) {
-              setLoading(false);
-              return setError('لطفا تمام فیلدها را پر کنید.');
-          }
-          if (password !== confirmPassword) {
-              setLoading(false);
-              return setError('رمز عبور و تکرار آن مطابقت ندارند.');
-          }
-          if (password.length < 4) {
-              setLoading(false);
-              return setError('رمز عبور باید حداقل ۴ کاراکتر باشد.');
-          }
+          if (!username || !password || !confirmPassword) throw new Error('لطفا تمام فیلدها را پر کنید.');
+          if (password !== confirmPassword) throw new Error('رمز عبور و تکرار آن مطابقت ندارند.');
 
           const newUser: User = {
-            id: Math.random().toString(36).substr(2, 9),
+            id: '', // Server assigns ID
             name: username,
             role: role,
             email: `${username}@rahyar.ir`, 
@@ -69,15 +54,19 @@ const LoginScreen = ({ onLogin }: LoginScreenProps) => {
             joinedDate: new Date().toLocaleDateString('fa-IR')
           };
 
-          const success = db.registerUser(newUser);
+          const success = await db.registerUser(newUser);
           if (success) {
-            onLogin(newUser);
+             const user = await db.login(username, password);
+             if(user) onLogin(user);
           } else {
-            setError('این نام کاربری قبلا ثبت شده است.');
+            setError('خطا در ثبت نام.');
           }
         }
+    } catch (err: any) {
+        setError(err.message || 'خطای سرور');
+    } finally {
         setLoading(false);
-    }, 1000); // Simulated network delay for effect
+    }
   };
 
   return (
