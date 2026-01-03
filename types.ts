@@ -103,6 +103,7 @@ export interface KnowledgeFile {
   name: string;
   size: string;
   uploadDate: string;
+  content?: string;
 }
 
 export interface AppSettings {
@@ -112,6 +113,45 @@ export interface AppSettings {
   themeMode: 'light' | 'dark' | 'system';
 }
 
+// --- NEW ADVANCED BUSINESS PLAN STRUCTURE ---
+export interface RiskItem {
+  title: string;
+  probability: 'Low' | 'Medium' | 'High';
+  impact: 'Low' | 'Medium' | 'High';
+  mitigation: string;
+}
+
+export interface Campaign {
+  name: string;
+  channel: string; // e.g. Instagram, SEO
+  budget: number;
+  expectedRoi: string;
+  strategy: string;
+}
+
+export interface BusinessPlanStructure {
+  executiveSummary: string;
+  marketAnalysis: string;
+  marketingStrategy: {
+      overview: string;
+      campaigns: Campaign[];
+  };
+  operationalPlan: string;
+  financialProjections: {
+      projections: { year: string; revenue: number; profit: number }[];
+      summary: string;
+  };
+  riskManagement: RiskItem[];
+  aiInsights: {
+      successProbability: number; // 0-100
+      trends: string[]; // Market trends detected
+      discrepancies: string[]; // Organizational mismatches
+      suggestions: string[];
+      warnings: string[];
+  };
+  generatedDate: string;
+}
+
 export interface SystemData {
   users: User[];
   projects: Project[];
@@ -119,7 +159,7 @@ export interface SystemData {
   finance: Transaction[];
   reports: Report[];
   contracts: Contract[];
-  businessPlan: string;
+  businessPlan: string; // Stores JSON string of BusinessPlanStructure
   chatLogs: ChatLog[];
   knowledgeBase: KnowledgeFile[];
   settings: AppSettings;

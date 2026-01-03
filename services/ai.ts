@@ -1,3 +1,4 @@
+
 import api from "./api";
 import { db } from "./db";
 import { io, Socket } from "socket.io-client";
@@ -32,12 +33,50 @@ export const generateTeamMember = async (description: string): Promise<any> => {
 
 export const generateBusinessPlan = async (): Promise<string> => {
   try {
+    const prompt = `
+      Based on the provided SYSTEM DATA (Users, Projects, Finance, Reports), generate a comprehensive, strategic Business Plan in JSON format.
+      
+      The analysis must be deep, identifying specific organizational discrepancies (e.g., high budget but low progress, understaffed departments).
+      
+      Return STRICT JSON with this structure:
+      {
+        "executiveSummary": "High-level summary...",
+        "marketAnalysis": "Detailed market analysis...",
+        "marketingStrategy": {
+            "overview": "General marketing approach...",
+            "campaigns": [
+                { "name": "Campaign Name", "channel": "Platform", "budget": 1000, "expectedRoi": "20%", "strategy": "Tactics..." }
+            ]
+        },
+        "operationalPlan": "Operational details...",
+        "financialProjections": {
+            "projections": [
+                { "year": "Current Year", "revenue": 100, "profit": 20 },
+                { "year": "Next Year", "revenue": 150, "profit": 40 }
+            ],
+            "summary": "Financial outlook text..."
+        },
+        "riskManagement": [
+            { "title": "Risk Name", "probability": "High/Medium/Low", "impact": "High/Medium/Low", "mitigation": "Action plan..." }
+        ],
+        "aiInsights": {
+            "successProbability": 75, // Integer 0-100 based on overall health
+            "trends": ["Trend 1", "Trend 2"],
+            "discrepancies": ["Discrepancy 1 (e.g. Finance vs Output)", "Discrepancy 2"],
+            "suggestions": ["Suggestion 1", "Suggestion 2"],
+            "warnings": ["Warning 1", "Warning 2"]
+        },
+        "generatedDate": "YYYY-MM-DD"
+      }
+    `;
+
     const response = await api.post('/ai/generate', {
-      prompt: `Based on system context, write a business plan (JSON): executiveSummary, marketAnalysis, marketingStrategy, operationalPlan, financialProjections.`,
+      prompt: prompt,
       mimeType: 'application/json'
     });
     return response.data.text || "";
   } catch (error) {
+    console.error(error);
     return "";
   }
 };
@@ -69,7 +108,7 @@ export const chatWithManager = async (message: string, isVoice: boolean, attachm
 export const getSmartAlerts = async (): Promise<{warning: string, suggestion: string} | null> => {
   try {
     const response = await api.post('/ai/generate', {
-        prompt: "Give me one important warning and one short suggestion for this company. JSON: {warning, suggestion}",
+        prompt: "Give me one important warning and one short suggestion for this company based on data. JSON: {warning, suggestion}",
         mimeType: 'application/json'
     });
     return JSON.parse(response.data.text || "null");
