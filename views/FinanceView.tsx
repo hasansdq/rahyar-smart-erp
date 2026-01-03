@@ -1,8 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { User, Transaction } from '../types';
 import { db } from '../services/db';
 import { consultFinance } from '../services/ai';
 import { Card, Modal } from '../components/UI';
+import { useUI } from '../context/UIContext';
 import { formatMoney } from '../utils/helpers';
 import { Sparkles, Send, ArrowUpRight, ArrowDownRight, Plus, Edit2, Trash2 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as ReTooltip } from 'recharts';
@@ -12,6 +14,7 @@ const FinanceView = ({ user }: { user: User }) => {
   const [query, setQuery] = useState('');
   const [aiResponse, setAiResponse] = useState('');
   const [loading, setLoading] = useState(false);
+  const { showToast, confirm } = useUI();
   
   // CRUD State
   const [showModal, setShowModal] = useState(false);
@@ -22,7 +25,10 @@ const FinanceView = ({ user }: { user: User }) => {
   }, []);
 
   const handleSaveTx = () => {
-     if(!editingTx.amount || !editingTx.category || !editingTx.date) return alert('لطفا اطلاعات را کامل کنید');
+     if(!editingTx.amount || !editingTx.category || !editingTx.date) {
+        showToast('لطفا اطلاعات ضروری (مبلغ، تاریخ، دسته‌بندی) را وارد کنید', 'error');
+        return;
+     }
      
      const tx: Transaction = {
         id: editingTx.id || Math.random().toString(36).substr(2, 9),
@@ -35,8 +41,10 @@ const FinanceView = ({ user }: { user: User }) => {
 
      if (editingTx.id) {
         db.updateTransaction(tx);
+        showToast('تراکنش ویرایش شد', 'success');
      } else {
         db.addTransaction(tx);
+        showToast('تراکنش جدید ثبت شد', 'success');
      }
      
      setShowModal(false);
@@ -44,9 +52,10 @@ const FinanceView = ({ user }: { user: User }) => {
   };
 
   const handleDeleteTx = (id: string) => {
-     if(confirm('آیا مطمئن هستید؟')) {
+     confirm('آیا از حذف این تراکنش اطمینان دارید؟', () => {
         db.deleteTransaction(id);
-     }
+        showToast('تراکنش با موفقیت حذف شد', 'success');
+     });
   };
 
   const handleConsult = async () => {

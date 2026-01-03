@@ -1,13 +1,16 @@
+
 import React, { useState, useEffect } from 'react';
 import { User, UserRole } from '../types';
 import { db } from '../services/db';
 import { generateTeamMember } from '../services/ai';
 import { Card, Modal } from '../components/UI';
+import { useUI } from '../context/UIContext';
 import { Users, Sparkles, Plus, Edit2, Trash2, BriefcaseIcon, Mail, Clock, Award, ArrowDownRight, CheckCircle, Phone, UserPlus } from 'lucide-react';
 
 const TeamView = ({ user }: { user: User }) => {
   const [users, setUsers] = useState(db.getUsers());
   const [activeTab, setActiveTab] = useState('All');
+  const { showToast, confirm } = useUI();
   
   // Modals
   const [showAddModal, setShowAddModal] = useState(false);
@@ -31,16 +34,21 @@ const TeamView = ({ user }: { user: User }) => {
   const canEdit = user.role === UserRole.MANAGER || user.role === UserRole.ADMIN;
 
   const handleSave = () => {
-    if(!formData.name || !formData.email) return;
+    if(!formData.name || !formData.email) {
+        showToast('لطفا نام و ایمیل را وارد کنید', 'error');
+        return;
+    }
 
     if (formData.id) {
        db.updateUser(formData as User);
+       showToast('اطلاعات کاربر بروزرسانی شد', 'success');
     } else {
        db.addUser({
          ...formData,
          id: Math.random().toString(36).substr(2, 9),
          joinedDate: new Date().toLocaleDateString('fa-IR')
        } as User);
+       showToast('عضو جدید به تیم اضافه شد', 'success');
     }
     setShowAddModal(false);
     setFormData({});
@@ -52,9 +60,10 @@ const TeamView = ({ user }: { user: User }) => {
   };
 
   const handleDelete = (id: string) => {
-    if(confirm('آیا مطمئن هستید؟ حذف کاربر غیرقابل بازگشت است.')) {
+    confirm('آیا مطمئن هستید؟ حذف کاربر غیرقابل بازگشت است.', () => {
       db.deleteUser(id);
-    }
+      showToast('کاربر از سیستم حذف شد', 'success');
+    });
   };
 
   const handleAIGenerate = async () => {
@@ -72,8 +81,9 @@ const TeamView = ({ user }: { user: User }) => {
       });
       setShowAIModal(false);
       setShowAddModal(true); // Open edit modal to review
+      showToast('پروفایل هوشمند تولید شد. لطفا بررسی و تایید کنید', 'info');
     } else {
-      alert("خطا در تولید اطلاعات.");
+      showToast("خطا در تولید اطلاعات با هوش مصنوعی", 'error');
     }
     setIsGenerating(false);
   };

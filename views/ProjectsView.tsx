@@ -4,6 +4,7 @@ import { User, Project, ProjectStatus, Report, UserRole } from '../types';
 import { db } from '../services/db';
 import { suggestProjectDetails } from '../services/ai';
 import { Card, Modal } from '../components/UI';
+import { useUI } from '../context/UIContext';
 import { formatMoney } from '../utils/helpers';
 import { Plus, Edit2, Trash2, Sparkles, FileText, UserPlus, CheckCircle, Upload } from 'lucide-react';
 
@@ -11,6 +12,7 @@ const ProjectsView = ({ user }: { user: User }) => {
   const [projects, setProjects] = useState(db.getProjects());
   const [users, setUsers] = useState(db.getUsers());
   const [reports, setReports] = useState(db.getReports());
+  const { showToast, confirm } = useUI();
   
   // Project Modal
   const [showModal, setShowModal] = useState(false);
@@ -35,7 +37,10 @@ const ProjectsView = ({ user }: { user: User }) => {
   }, []);
 
   const handleSave = () => {
-    if (!editingProject.title) return;
+    if (!editingProject.title) {
+        showToast('لطفا عنوان پروژه را وارد کنید', 'warning');
+        return;
+    }
     const proj: Project = {
       id: editingProject.id || Math.random().toString(36).substr(2, 9),
       title: editingProject.title,
@@ -57,6 +62,7 @@ const ProjectsView = ({ user }: { user: User }) => {
     if (editingProject.id) db.updateProject(proj);
     else db.addProject(proj);
     
+    showToast(editingProject.id ? 'پروژه با موفقیت ویرایش شد' : 'پروژه جدید ایجاد شد', 'success');
     setShowModal(false);
     setEditingProject({});
   };
@@ -74,14 +80,16 @@ const ProjectsView = ({ user }: { user: User }) => {
         risks: suggestion.risks,
         tags: suggestion.tags
       });
+      showToast('اطلاعات پروژه توسط هوش مصنوعی تولید شد', 'info');
     }
     setLoadingAi(false);
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('حذف پروژه؟')) {
+    confirm('آیا از حذف این پروژه اطمینان دارید؟ تمامی اطلاعات مرتبط حذف خواهند شد.', () => {
        db.deleteProject(id);
-    }
+       showToast('پروژه با موفقیت حذف شد', 'success');
+    });
   }
 
   const toggleTeamMember = (uid: string) => {
@@ -105,7 +113,10 @@ const ProjectsView = ({ user }: { user: User }) => {
   };
 
   const submitReport = async () => {
-      if(!newReport.content || !activeProjectForReport) return;
+      if(!newReport.content || !activeProjectForReport) {
+          showToast('متن گزارش نمی‌تواند خالی باشد', 'error');
+          return;
+      }
       
       const reportData: Report = {
           id: Math.random().toString(36).substr(2, 9),
@@ -118,6 +129,7 @@ const ProjectsView = ({ user }: { user: User }) => {
       };
 
       await db.addReport(reportData);
+      showToast('گزارش با موفقیت ثبت شد', 'success');
       setNewReport({});
       setShowReportModal(false);
   };

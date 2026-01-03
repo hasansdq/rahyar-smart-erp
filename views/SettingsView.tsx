@@ -1,7 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { User, KnowledgeFile } from '../types';
 import { db } from '../services/db';
 import { Card, Modal } from '../components/UI';
+import { useUI } from '../context/UIContext';
 import { Settings, Sun, Moon, UploadCloud, File, Trash2, Edit2 } from 'lucide-react';
 
 const SettingsView = ({ user, setDarkMode }: { user: User, setDarkMode: (v: boolean) => void }) => {
@@ -9,6 +11,7 @@ const SettingsView = ({ user, setDarkMode }: { user: User, setDarkMode: (v: bool
    const [activeTab, setActiveTab] = useState<'general' | 'knowledge'>('general');
    const [knowledgeFiles, setKnowledgeFiles] = useState(db.getKnowledgeBase());
    const [uploading, setUploading] = useState(false);
+   const { showToast, confirm } = useUI();
    
    // File Edit State
    const [showFileModal, setShowFileModal] = useState(false);
@@ -25,7 +28,7 @@ const SettingsView = ({ user, setDarkMode }: { user: User, setDarkMode: (v: bool
    const save = () => {
       db.updateSettings(settings);
       setDarkMode(settings.themeMode === 'dark');
-      alert('تنظیمات ذخیره شد');
+      showToast('تنظیمات با موفقیت ذخیره شد', 'success');
    };
 
    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -34,8 +37,9 @@ const SettingsView = ({ user, setDarkMode }: { user: User, setDarkMode: (v: bool
          setUploading(true);
          try {
              await db.uploadKnowledgeFile(file);
+             showToast('فایل با موفقیت در پایگاه دانش بارگذاری شد', 'success');
          } catch (err) {
-             alert('خطا در آپلود فایل');
+             showToast('خطا در بارگذاری فایل. لطفا مجددا تلاش کنید', 'error');
          } finally {
              setUploading(false);
          }
@@ -43,9 +47,10 @@ const SettingsView = ({ user, setDarkMode }: { user: User, setDarkMode: (v: bool
    };
 
    const handleDeleteFile = async (id: string) => {
-      if(confirm('حذف فایل؟')) {
+      confirm('آیا از حذف این فایل از پایگاه دانش اطمینان دارید؟', async () => {
          await db.deleteKnowledgeFile(id);
-      }
+         showToast('فایل با موفقیت حذف شد', 'success');
+      });
    };
 
    const handleEditFile = (file: KnowledgeFile) => {
@@ -59,6 +64,7 @@ const SettingsView = ({ user, setDarkMode }: { user: User, setDarkMode: (v: bool
          db.updateKnowledgeFile({...editingFile, name: fileName});
          setShowFileModal(false);
          setEditingFile(null);
+         showToast('نام فایل ویرایش شد', 'success');
       }
    };
 

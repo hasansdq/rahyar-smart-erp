@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { BrainCircuit, Cpu, Lock } from 'lucide-react';
+import { BrainCircuit, Cpu, Lock, X, CheckCircle, AlertTriangle, Info, AlertCircle } from 'lucide-react';
 
 export const RahyarLogo = ({ size = 'md', className = '' }: { size?: 'sm' | 'md' | 'lg' | 'xl', className?: string }) => {
   const sizeClasses = {
@@ -153,3 +154,61 @@ export const AccessDeniedModal = ({ isOpen, onClose, message }: { isOpen: boolea
         </div>
     );
 }
+
+// --- NEW NOTIFICATION COMPONENTS ---
+
+export const Toast = ({ message, type, onClose }: { message: string, type: 'success' | 'error' | 'info' | 'warning', onClose: () => void }) => {
+    const icons = {
+        success: <CheckCircle className="text-emerald-500" size={24} />,
+        error: <AlertCircle className="text-rose-500" size={24} />,
+        warning: <AlertTriangle className="text-amber-500" size={24} />,
+        info: <Info className="text-blue-500" size={24} />
+    };
+
+    const colors = {
+        success: 'border-emerald-100 bg-emerald-50/50 dark:bg-emerald-900/20 dark:border-emerald-800/50',
+        error: 'border-rose-100 bg-rose-50/50 dark:bg-rose-900/20 dark:border-rose-800/50',
+        warning: 'border-amber-100 bg-amber-50/50 dark:bg-amber-900/20 dark:border-amber-800/50',
+        info: 'border-blue-100 bg-blue-50/50 dark:bg-blue-900/20 dark:border-blue-800/50'
+    };
+
+    return (
+        <div className={`flex items-start gap-3 p-4 rounded-2xl border shadow-lg backdrop-blur-md mb-3 min-w-[320px] max-w-md animate-slideDown ${colors[type]}`}>
+            <div className="flex-shrink-0 mt-0.5">{icons[type]}</div>
+            <div className="flex-1">
+                <p className="text-sm font-bold text-slate-800 dark:text-slate-100 leading-tight">
+                    {type === 'success' ? 'عملیات موفق' : type === 'error' ? 'خطا در عملیات' : 'توجه'}
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">{message}</p>
+            </div>
+            <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+                <X size={16} />
+            </button>
+        </div>
+    );
+};
+
+export const ConfirmDialog = ({ isOpen, message, onConfirm, onCancel }: { isOpen: boolean, message: string, onConfirm: () => void, onCancel: () => void }) => {
+    if (!isOpen) return null;
+    return (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fadeIn">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl border border-slate-200 dark:border-slate-700 animate-slideUp">
+                <div className="w-16 h-16 bg-amber-50 dark:bg-amber-900/20 rounded-full flex items-center justify-center mx-auto mb-4 text-amber-500">
+                    <AlertTriangle size={32} />
+                </div>
+                <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2">آیا اطمینان دارید؟</h3>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mb-6 leading-relaxed">
+                    {message}
+                </p>
+                <div className="flex gap-3">
+                    <button onClick={onCancel} className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                        انصراف
+                    </button>
+                    <button onClick={onConfirm} className="flex-1 py-2.5 bg-rose-600 text-white rounded-xl font-bold hover:bg-rose-700 transition-colors shadow-lg shadow-rose-500/20">
+                        بله، انجام شود
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};

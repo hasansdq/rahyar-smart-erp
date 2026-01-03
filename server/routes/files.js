@@ -1,3 +1,4 @@
+
 import express from 'express';
 import multer from 'multer';
 import pdf from 'pdf-parse';
@@ -11,6 +12,10 @@ router.post('/upload', authenticateToken, upload.single('file'), async (req, res
     try {
         if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
+        // Fix for Persian filenames: Decode the originalname from latin1 to utf8
+        // Multer often treats header bytes as Latin1 by default, garbling UTF-8 characters
+        const fileName = Buffer.from(req.file.originalname, 'latin1').toString('utf8');
+
         let content = '';
         const buffer = req.file.buffer;
         
@@ -23,10 +28,10 @@ router.post('/upload', authenticateToken, upload.single('file'), async (req, res
                 console.error('PDF Parse Error:', err);
                 content = "Could not extract text from PDF.";
             }
-        } else if (req.file.mimetype.startsWith('text/') || req.file.originalname.endsWith('.txt') || req.file.originalname.endsWith('.md')) {
+        } else if (req.file.mimetype.startsWith('text/') || fileName.endsWith('.txt') || fileName.endsWith('.md')) {
             content = buffer.toString('utf-8');
         } else {
-            content = `[Binary File: ${req.file.originalname}]`;
+            content = `[Binary File: ${fileName}]`;
         }
 
         // Limit content size for DB to avoid errors if not LONGTEXT
@@ -34,7 +39,7 @@ router.post('/upload', authenticateToken, upload.single('file'), async (req, res
 
         const newFile = await KnowledgeFile.create({
             id: Math.random().toString(36).substr(2, 9),
-            name: req.file.originalname,
+            name: fileName,
             size: (req.file.size / 1024 / 1024).toFixed(2) + ' MB',
             uploadDate: new Date().toLocaleDateString('fa-IR'),
             content: content
