@@ -18,11 +18,11 @@ const sequelize = new Sequelize('mysql://root:TTSSOgqnxNqkdbCHsJPPkSrwsHQOvIjg@t
 // Models
 const User = sequelize.define('User', {
   id: { type: DataTypes.STRING, primaryKey: true },
-  name: { type: DataTypes.STRING, allowNull: false },
+  name: { type: DataTypes.STRING, allowNull: false, unique: true },
   role: { type: DataTypes.STRING },
   email: { type: DataTypes.STRING },
   password: { type: DataTypes.STRING },
-  phoneNumber: { type: DataTypes.STRING },
+  phoneNumber: { type: DataTypes.STRING, unique: true },
   skills: { type: DataTypes.JSON },
   department: { type: DataTypes.STRING },
   status: { type: DataTypes.STRING },
@@ -102,7 +102,7 @@ const KnowledgeFile = sequelize.define('KnowledgeFile', {
   name: { type: DataTypes.STRING },
   size: { type: DataTypes.STRING },
   uploadDate: { type: DataTypes.STRING },
-  content: { type: DataTypes.TEXT('long') } // Added content field for RAG
+  content: { type: DataTypes.TEXT('long') } 
 });
 
 const Settings = sequelize.define('Settings', {
