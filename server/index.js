@@ -6,6 +6,12 @@ import { GoogleGenAI } from '@google/genai';
 import { sequelize, User, Project, Task, Transaction, Report, Contract, ChatLog, Settings, KnowledgeFile, initDB } from './models.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Fix for __dirname in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const httpServer = createServer(app);
@@ -16,7 +22,8 @@ const io = new Server(httpServer, {
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
-const PORT = 3001;
+// --- Railway requires listening on process.env.PORT ---
+const PORT = process.env.PORT || 3001;
 const API_KEY = process.env.API_KEY; 
 const JWT_SECRET = 'rahyar-secret-key-change-in-prod';
 
@@ -199,7 +206,6 @@ app.post('/api/ai/chat', authenticateToken, async (req, res) => {
 });
 
 // --- LIVE AI PROXY (WebSocket) ---
-// This acts as a bridge: Client Audio -> Server -> Google Live API -> Server -> Client Audio
 io.on('connection', (socket) => {
     console.log('Client connected for Live AI');
     let aiSession = null;
@@ -207,8 +213,6 @@ io.on('connection', (socket) => {
     socket.on('start-live', async (config) => {
         try {
             const systemInstruction = await getSystemContext();
-            // We use the Gemini Live API on the server
-            // Note: @google/genai's live.connect works in Node.js
             aiSession = await ai.live.connect({
                 model: 'gemini-2.5-flash-native-audio-preview-09-2025',
                 config: {
@@ -218,7 +222,6 @@ io.on('connection', (socket) => {
                 callbacks: {
                     onopen: () => socket.emit('live-status', 'connected'),
                     onmessage: (msg) => {
-                         // Forward backend message to frontend
                          if(msg.serverContent) {
                             socket.emit('live-output', msg.serverContent);
                          }
@@ -234,11 +237,10 @@ io.on('connection', (socket) => {
 
     socket.on('audio-input', (data) => {
         if (aiSession) {
-            // Forward client audio to Gemini
             aiSession.sendRealtimeInput({
                 media: {
                     mimeType: 'audio/pcm;rate=16000',
-                    data: data // Base64 from client
+                    data: data 
                 }
             });
         }
@@ -246,15 +248,32 @@ io.on('connection', (socket) => {
 
     socket.on('disconnect', () => {
         if (aiSession) {
-             // aiSession.close(); // If API supports explicit close
+             // aiSession.close();
         }
     });
 });
 
+// --- SERVE FRONTEND (PRODUCTION) ---
+// This middleware serves the static files from the build directory
+app.use(express.static(path.join(__dirname, '../dist')));
+
+// Handle React routing, return all requests to React app
+app.get('*', (req, res) => {
+  // If request is for API, don't serve html
+  if(req.path.startsWith('/api') || req.path.startsWith('/socket.io')) {
+      return res.status(404).json({ error: 'Not found' });
+  }
+  res.sendFile(path.join(__dirname, '../dist/index.html'));
+});
 
 // Start
 initDB().then(() => {
-  httpServer.listen(PORT, () => {
+  // Listen on 0.0.0.0 to ensure external access in containerized environments
+  httpServer.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on port ${PORT}`);
   });
+}).catch(err => {
+  console.error('Failed to initialize DB:', err);
+  // Optional: Start server anyway if DB is optional, otherwise exit
+  // process.exit(1); 
 });
