@@ -11,7 +11,7 @@ export const PERMISSIONS: Record<PageId, UserRole[]> = {
   'team': [UserRole.MANAGER, UserRole.ADMIN],
   'chat': [UserRole.MANAGER, UserRole.ADMIN], // Employee removed
   'business-plan': [UserRole.MANAGER],
-  'settings': [UserRole.MANAGER, UserRole.ADMIN, UserRole.EMPLOYEE],
+  'settings': [UserRole.MANAGER, UserRole.ADMIN], // Employee removed
 };
 
 export const canAccess = (role: UserRole, page: PageId): boolean => {
@@ -26,6 +26,7 @@ export const getAccessMessage = (page: PageId): string => {
        case 'business-plan': return 'بیزینس پلن محرمانه و فقط مخصوص مدیرعامل است.';
        case 'chat': return 'دستیار هوشمند فقط برای مدیران و ادمین‌ها فعال است.';
        case 'tasks': return 'دسترسی به وظایف محدود شده است.';
+       case 'settings': return 'تنظیمات سیستم فقط برای مدیران و ادمین‌ها در دسترس است.';
        default: return 'شما مجوز دسترسی به این بخش را ندارید.';
    }
 };
