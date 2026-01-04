@@ -1,5 +1,4 @@
-
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, PropsWithChildren } from 'react';
 import { Toast, ConfirmDialog } from '../components/UI';
 
 interface ToastData {
@@ -15,7 +14,7 @@ interface UIContextType {
 
 const UIContext = createContext<UIContextType | undefined>(undefined);
 
-export const UIProvider = ({ children }: { children: ReactNode }) => {
+export const UIProvider: React.FC<PropsWithChildren<{}>> = ({ children }) => {
   const [toasts, setToasts] = useState<ToastData[]>([]);
   const [confirmState, setConfirmState] = useState<{ isOpen: boolean, message: string, onConfirm: () => void } | null>(null);
 

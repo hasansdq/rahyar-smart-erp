@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrainCircuit, Cpu, Lock, X, CheckCircle, AlertTriangle, Info, AlertCircle } from 'lucide-react';
 
@@ -157,7 +156,7 @@ export const AccessDeniedModal = ({ isOpen, onClose, message }: { isOpen: boolea
 
 // --- NEW NOTIFICATION COMPONENTS ---
 
-export const Toast = ({ message, type, onClose }: { message: string, type: 'success' | 'error' | 'info' | 'warning', onClose: () => void }) => {
+export const Toast: React.FC<{ message: string, type: 'success' | 'error' | 'info' | 'warning', onClose: () => void }> = ({ message, type, onClose }) => {
     const icons = {
         success: <CheckCircle className="text-emerald-500" size={24} />,
         error: <AlertCircle className="text-rose-500" size={24} />,
