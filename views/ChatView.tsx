@@ -13,7 +13,7 @@ const ChatView = ({ user }: { user: User }) => {
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const bottomRef = useRef<HTMLDivElement>(null);
+    const messagesContainerRef = useRef<HTMLDivElement>(null); // Ref for the scrolling container
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // --- Live Chat State ---
@@ -23,6 +23,17 @@ const ChatView = ({ user }: { user: User }) => {
     const sessionRef = useRef<LiveSessionManager | null>(null);
 
     // --- Text Chat Methods ---
+    const scrollToBottom = () => {
+        if (messagesContainerRef.current) {
+            // Use scrollTo on the container instead of scrollIntoView to prevent parent scrolling
+            const { scrollHeight, clientHeight } = messagesContainerRef.current;
+            messagesContainerRef.current.scrollTo({
+                top: scrollHeight - clientHeight,
+                behavior: 'smooth'
+            });
+        }
+    };
+
     const handleSend = async () => {
         if((!input.trim() && !selectedFile)) return;
         
@@ -43,8 +54,8 @@ const ChatView = ({ user }: { user: User }) => {
         setSelectedFile(null); 
         setLoading(true);
 
-        // Scroll immediately to show user message
-        setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+        // Scroll immediately
+        setTimeout(scrollToBottom, 100);
 
         const response = await chatWithManager(userMsg.message, false, fileToSend || undefined);
         
@@ -60,7 +71,7 @@ const ChatView = ({ user }: { user: User }) => {
     };
 
     useEffect(() => {
-        bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+        scrollToBottom();
     }, [messages, loading]);
 
     // --- Live Chat Methods ---
@@ -93,13 +104,13 @@ const ChatView = ({ user }: { user: User }) => {
     }, []);
 
     return (
-        <div className="h-[calc(100vh-10rem)] flex flex-col bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 relative isolate">
+        <div className="h-[calc(100vh-8rem)] flex flex-col bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 relative isolate">
             
             {/* Ambient Background Glows */}
             <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-indigo-500/10 to-transparent pointer-events-none z-0"></div>
             <div className="absolute -bottom-20 -right-20 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl pointer-events-none z-0"></div>
 
-            {/* Modern Header */}
+            {/* Modern Header - Fixed at Top */}
             <div className="relative z-20 px-6 py-4 flex justify-between items-center border-b border-slate-100 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl shrink-0">
                  <div className="flex items-center gap-4">
                      <div className="relative group">
@@ -138,12 +149,15 @@ const ChatView = ({ user }: { user: User }) => {
                  </div>
             </div>
 
-            {/* Content Container */}
+            {/* Content Container - Flex Column to manage layout */}
             <div className="flex-1 overflow-hidden relative z-10 flex flex-col w-full">
                 
                 {/* --- TEXT MODE --- */}
-                <div className={`absolute inset-0 flex flex-col w-full transition-all duration-500 ease-in-out ${activeTab === 'text' ? 'opacity-100 translate-x-0 z-20' : 'opacity-0 translate-x-10 pointer-events-none z-10'}`}>
-                    <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar scroll-smooth pb-4 w-full">
+                {/* Using hidden/block instead of absolute for better layout stability during resize/scroll */}
+                <div className={`flex flex-col w-full h-full transition-opacity duration-500 ${activeTab === 'text' ? 'opacity-100 flex' : 'hidden opacity-0'}`}>
+                    
+                    {/* Messages Area - Takes remaining space */}
+                    <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar scroll-smooth pb-4 w-full">
                         {messages.length === 0 && (
                             <div className="h-full flex flex-col items-center justify-center text-slate-400">
                                 <div className="w-24 h-24 bg-gradient-to-tr from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-800/50 rounded-[2rem] flex items-center justify-center mb-6 shadow-inner animate-float">
@@ -159,7 +173,7 @@ const ChatView = ({ user }: { user: User }) => {
                             <div 
                                 key={msg.id} 
                                 className="space-y-3 animate-slideUp w-full" 
-                                style={{animationDelay: `${Math.min(idx * 0.05, 0.5)}s`}} // Capped animation delay
+                                style={{animationDelay: `${Math.min(idx * 0.05, 0.5)}s`}}
                             >
                                 {/* User Message */}
                                 <div className="flex justify-end group w-full">
@@ -191,11 +205,10 @@ const ChatView = ({ user }: { user: User }) => {
                                 </div>
                             </div>
                         ))}
-                        <div ref={bottomRef} className="h-0 w-full"></div>
                     </div>
 
-                    {/* Modern Input Area */}
-                    <div className="relative p-5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 z-30 shrink-0 w-full">
+                    {/* Modern Input Area - Always at bottom */}
+                    <div className="relative p-5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 z-30 shrink-0 w-full mt-auto">
                         {selectedFile && (
                             <div className="absolute bottom-full right-8 mb-2 bg-white dark:bg-slate-800 p-2 pr-4 rounded-xl border border-blue-100 dark:border-blue-900/30 shadow-lg animate-slideUp flex items-center gap-3">
                                 <div className="w-8 h-8 bg-blue-50 dark:bg-blue-900/20 rounded-lg flex items-center justify-center text-blue-600">

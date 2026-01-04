@@ -1,39 +1,20 @@
 <div align="center">
-<p align="center">
-  <img
-    src="https://raw.githubusercontent.com/hasansdq/rahyar-smart-erp/main/assets/images/rahyar-poster.jpg"
-    alt="Rahyar Smart ERP"
-    width="90%"
-  />
-</p>
-
+<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 </div>
 
- <h1>سامانه هوشمند رهیار</h1>
-<h3>ERP مینیمال هوشمند مبتنی بر هوش مصنوعی</h3>
+# Run and deploy your AI Studio app
 
-<p>
-<strong>سامانه هوشمند رهیار</strong> یک نرم‌افزار آنلاین ERP مینیمال مبتنی بر هوش مصنوعی است که با هدف ساده‌سازی مدیریت و تصمیم‌سازی در کسب‌وکارهای کوچک و متوسط توسعه داده شده است. این سیستم تلاش می‌کند به‌جای پیچیدگی‌های رایج ERPهای سنتی، هسته اصلی فرآیندهای کسب‌وکار را به‌صورت ساده، شفاف و یکپارچه پوشش دهد.
-</p>
+This contains everything you need to run your app locally.
 
-<p>
-رهیار یک ابزار صرفاً ثبت اطلاعات نیست، بلکه با تحلیل داده‌های واقعی ثبت‌شده در سیستم، بینش‌های مدیریتی، هشدارهای هوشمند و پیشنهادهای قابل اقدام ارائه می‌دهد. ساختار سیستم به‌صورت نقش‌محور طراحی شده و کاربران مختلف (مدیر، ادمین و کارمند) بر اساس سطح دسترسی خود، تجربه و امکانات متفاوتی دریافت می‌کنند.
-</p>
+View your app in AI Studio: https://ai.studio/apps/drive/1P8HZe2qOukiPvleVE4A4ve_WW8JU0YeP
 
-<p>
-این پروژه به‌صورت <strong>SAAS آنلاین</strong> و با استفاده از <strong>Node.js</strong> توسعه یافته و در حال حاضر در <strong>مرحله MVP</strong> قرار دارد. تمرکز نسخه فعلی بر پیاده‌سازی هسته اصلی سیستم، منطق نقش‌محور، تحلیل‌های هوش مصنوعی و تجربه کاربری اولیه است.
-</p>
+## Run Locally
 
-<p>
-هدف اصلی رهیار، ارائه یک ERP سبک، قابل فهم و هوشمند است که به مدیران کمک کند بدون درگیر شدن با ابزارهای پراکنده و گزارش‌های پیچیده، دید دقیق‌تری نسبت به وضعیت کسب‌وکار خود داشته باشند و تصمیم‌های آگاهانه‌تری اتخاذ کنند.
-</p>
+**Prerequisites:**  Node.js
 
-<h3>مشخصات فنی</h3>
-<ul>
-  <li>Backend Framework: Node.js</li>
-  <li>Programming Language: JavaScript</li>
-  <li>Database: MySQL</li>
-  <li>AI Engine: Gemini</li>
-  <li>Server / Deployment: Railway</li>
-  <li>Project Status: MVP</li>
-</ul>
+
+1. Install dependencies:
+   `npm install`
+2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+3. Run the app:
+   `npm run dev`
