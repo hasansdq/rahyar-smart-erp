@@ -43,6 +43,9 @@ const ChatView = ({ user }: { user: User }) => {
         setSelectedFile(null); 
         setLoading(true);
 
+        // Scroll immediately to show user message
+        setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+
         const response = await chatWithManager(userMsg.message, false, fileToSend || undefined);
         
         setMessages(prev => prev.map(m => m.id === userMsg.id ? {...m, response: response} : m));
@@ -136,11 +139,11 @@ const ChatView = ({ user }: { user: User }) => {
             </div>
 
             {/* Content Container */}
-            <div className="flex-1 overflow-hidden relative z-10 flex flex-col">
+            <div className="flex-1 overflow-hidden relative z-10 flex flex-col w-full">
                 
                 {/* --- TEXT MODE --- */}
-                <div className={`absolute inset-0 flex flex-col transition-all duration-500 ease-in-out ${activeTab === 'text' ? 'opacity-100 translate-x-0 z-20' : 'opacity-0 translate-x-10 pointer-events-none z-10'}`}>
-                    <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar scroll-smooth pb-4">
+                <div className={`absolute inset-0 flex flex-col w-full transition-all duration-500 ease-in-out ${activeTab === 'text' ? 'opacity-100 translate-x-0 z-20' : 'opacity-0 translate-x-10 pointer-events-none z-10'}`}>
+                    <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar scroll-smooth pb-4 w-full">
                         {messages.length === 0 && (
                             <div className="h-full flex flex-col items-center justify-center text-slate-400">
                                 <div className="w-24 h-24 bg-gradient-to-tr from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-800/50 rounded-[2rem] flex items-center justify-center mb-6 shadow-inner animate-float">
@@ -153,25 +156,29 @@ const ChatView = ({ user }: { user: User }) => {
                             </div>
                         )}
                         {messages.map((msg, idx) => (
-                            <div key={msg.id} className="space-y-3 animate-slideUp" style={{animationDelay: `${idx * 0.05}s`}}>
+                            <div 
+                                key={msg.id} 
+                                className="space-y-3 animate-slideUp w-full" 
+                                style={{animationDelay: `${Math.min(idx * 0.05, 0.5)}s`}} // Capped animation delay
+                            >
                                 {/* User Message */}
-                                <div className="flex justify-end group">
+                                <div className="flex justify-end group w-full">
                                     <div className="bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-600 text-white px-6 py-4 rounded-[1.5rem] rounded-tr-md max-w-[85%] shadow-xl shadow-indigo-500/20 relative overflow-hidden transition-transform hover:scale-[1.01]">
                                         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 mix-blend-overlay"></div>
-                                        <p className="text-sm leading-7 relative z-10 whitespace-pre-wrap">{msg.message}</p>
+                                        <p className="text-sm leading-7 relative z-10 whitespace-pre-wrap break-words">{msg.message}</p>
                                         <div className="text-[10px] text-indigo-200 mt-2 text-left font-mono relative z-10 opacity-70 group-hover:opacity-100 transition-opacity">{msg.timestamp}</div>
                                     </div>
                                 </div>
                                 
                                 {/* AI Response */}
-                                <div className="flex justify-start gap-3 items-end">
+                                <div className="flex justify-start gap-3 items-end w-full">
                                     <div className="w-8 h-8 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center shadow-lg flex-shrink-0 mb-2">
                                         <Sparkles size={14} />
                                     </div>
                                     <div className="bg-white dark:bg-slate-800/80 backdrop-blur-md border border-slate-100 dark:border-slate-700 text-slate-700 dark:text-slate-200 px-6 py-4 rounded-[1.5rem] rounded-tl-md max-w-[90%] shadow-sm hover:shadow-md transition-shadow">
                                         {msg.response ? (
                                             <div className="prose prose-sm dark:prose-invert max-w-none text-justify leading-loose">
-                                                <p className="text-sm whitespace-pre-wrap">{msg.response}</p>
+                                                <p className="text-sm whitespace-pre-wrap break-words">{msg.response}</p>
                                             </div>
                                         ) : (
                                             <div className="flex items-center gap-1.5 h-6">
@@ -184,11 +191,11 @@ const ChatView = ({ user }: { user: User }) => {
                                 </div>
                             </div>
                         ))}
-                        <div ref={bottomRef} className="h-0"></div>
+                        <div ref={bottomRef} className="h-0 w-full"></div>
                     </div>
 
                     {/* Modern Input Area */}
-                    <div className="relative p-5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 z-30 shrink-0">
+                    <div className="relative p-5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 z-30 shrink-0 w-full">
                         {selectedFile && (
                             <div className="absolute bottom-full right-8 mb-2 bg-white dark:bg-slate-800 p-2 pr-4 rounded-xl border border-blue-100 dark:border-blue-900/30 shadow-lg animate-slideUp flex items-center gap-3">
                                 <div className="w-8 h-8 bg-blue-50 dark:bg-blue-900/20 rounded-lg flex items-center justify-center text-blue-600">
@@ -239,7 +246,7 @@ const ChatView = ({ user }: { user: User }) => {
                 </div>
 
                 {/* --- LIVE MODE (Voice) --- */}
-                <div className={`absolute inset-0 bg-slate-950 flex flex-col items-center justify-center transition-all duration-500 ease-in-out ${activeTab === 'live' ? 'opacity-100 translate-x-0 z-20' : 'opacity-0 -translate-x-10 pointer-events-none z-10'}`}>
+                <div className={`absolute inset-0 bg-slate-950 flex flex-col items-center justify-center w-full transition-all duration-500 ease-in-out ${activeTab === 'live' ? 'opacity-100 translate-x-0 z-20' : 'opacity-0 -translate-x-10 pointer-events-none z-10'}`}>
                      
                      {/* Dynamic Background */}
                      <div className="absolute inset-0 overflow-hidden">
